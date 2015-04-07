@@ -63,8 +63,8 @@ public class SecurityMemberAccess extends DefaultMemberAccess {
         Class memberClass = member.getDeclaringClass();
 
         if (Modifier.isStatic(member.getModifiers()) && allowStaticMethodAccess) {
-            if (LOG.isWarnEnabled()) {
-                LOG.warn("Support for accessing static methods is deprecated! Please refactor your application!");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Support for accessing static methods [target: #0, member: #1, property: #2] is deprecated!", target, member, propertyName);
             }
             if (!isClassExcluded(member.getDeclaringClass())) {
                 targetClass = member.getDeclaringClass();
@@ -128,8 +128,14 @@ public class SecurityMemberAccess extends DefaultMemberAccess {
     }
 
     protected boolean isPackageExcluded(Package targetPackage, Package memberPackage) {
+        if (LOG.isWarnEnabled() && (targetPackage == null || memberPackage == null)) {
+            LOG.warn("The use of the default (unnamed) package is discouraged!");
+        }
+        
+        final String targetPackageName = targetPackage == null ? "" : targetPackage.getName();
+        final String memberPackageName = memberPackage == null ? "" : memberPackage.getName();
         for (Pattern pattern : excludedPackageNamePatterns) {
-            if (pattern.matcher(targetPackage.getName()).matches() || pattern.matcher(memberPackage.getName()).matches()) {
+            if (pattern.matcher(targetPackageName).matches() || pattern.matcher(memberPackageName).matches()) {
                 return true;
             }
         }
