@@ -55,7 +55,7 @@ public class URLValidator extends FieldValidatorSupport {
             return;
         }
 
-        if (!(value.getClass().equals(String.class)) || !Pattern.compile(getUrlRegex()).matcher((String) value).matches()) {
+        if (!(value.getClass().equals(String.class)) || !Pattern.compile(getUrlRegex(), Pattern.CASE_INSENSITIVE).matcher(String.valueOf(value)).matches()) {
             addFieldError(fieldName, object);
         }
     }
@@ -81,7 +81,7 @@ public class URLValidator extends FieldValidatorSupport {
                     "|((\\d|[1-9]\\d|1\\d{2}|2[0-4][0-9]|25[0-5])\\.){3}" +
                     "(\\d|[1-9]\\d|1\\d{2}|2[0-4][0-9]|25[0-5])" +
                     ")(:\\d+)?" +
-                    ")(((\\/+([a-z0-9$_\\.\\+!\\*\\'\\(\\),;:@&=-]|%[0-9a-f]{2})*)*" +
+                    ")(((\\/{0,1}([a-z0-9$_\\.\\+!\\*\\'\\(\\),;:@&=-]|%[0-9a-f]{2})*)*" +
                     "(\\?([a-z0-9$_\\.\\+!\\*\\'\\(\\),;:@&=-]|%[0-9a-f]{2})*)" +
                     "?)?)?" +
                     "(#([a-z0-9$_\\.\\+!\\*\\'\\(\\),;:@&=-]|%[0-9a-f]{2})*)?" +

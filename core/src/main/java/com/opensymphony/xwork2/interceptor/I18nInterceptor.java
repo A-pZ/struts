@@ -20,6 +20,8 @@ import com.opensymphony.xwork2.ActionInvocation;
 import com.opensymphony.xwork2.util.LocalizedTextUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.struts2.dispatcher.Parameter;
+import org.apache.struts2.dispatcher.HttpParameters;
 
 import java.util.Arrays;
 import java.util.Locale;
@@ -167,7 +169,7 @@ public class I18nInterceptor extends AbstractInterceptor {
 
     protected class LocaleFinder {
         protected String storage = Storage.SESSION.toString();
-        protected Object requestedLocale = null;
+        protected Parameter requestedLocale = null;
 
         protected ActionInvocation actionInvocation = null;
 
@@ -178,17 +180,17 @@ public class I18nInterceptor extends AbstractInterceptor {
 
         protected void find() {
             //get requested locale
-            Map<String, Object> params = actionInvocation.getInvocationContext().getParameters();
+            HttpParameters params = actionInvocation.getInvocationContext().getParameters();
 
             storage = Storage.SESSION.toString();
 
             requestedLocale = findLocaleParameter(params, parameterName);
-            if (requestedLocale != null) {
+            if (requestedLocale.isDefined()) {
                 return;
             }
 
             requestedLocale = findLocaleParameter(params, requestOnlyParameterName);
-            if (requestedLocale != null) {
+            if (requestedLocale.isDefined()) {
                 storage = Storage.NONE.toString();
             }
         }
@@ -197,8 +199,8 @@ public class I18nInterceptor extends AbstractInterceptor {
             return storage;
         }
 
-        public Object getRequestedLocale() {
-            return requestedLocale;
+        public String getRequestedLocale() {
+            return requestedLocale.getValue();
         }
     }
 
@@ -264,13 +266,11 @@ public class I18nInterceptor extends AbstractInterceptor {
         return locale;
     }
 
-    protected Object findLocaleParameter(Map<String, Object> params, String parameterName) {
-        Object requestedLocale = params.remove(parameterName);
-        if (requestedLocale != null && requestedLocale.getClass().isArray()
-                && ((Object[]) requestedLocale).length > 0) {
-            requestedLocale = ((Object[]) requestedLocale)[0];
-
-            LOG.debug("Requested locale: {}", requestedLocale);
+    protected Parameter findLocaleParameter(HttpParameters params, String parameterName) {
+        Parameter requestedLocale = params.get(parameterName);
+        params.remove(parameterName);
+        if (requestedLocale.isDefined()) {
+            LOG.debug("Requested locale: {}", requestedLocale.getValue());
         }
         return requestedLocale;
     }
