@@ -21,16 +21,15 @@
 
 package org.apache.struts2.views.jsp.iterator;
 
-import javax.servlet.jsp.JspException;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.struts2.util.SubsetIteratorFilter;
 import org.apache.struts2.util.SubsetIteratorFilter.Decider;
 import org.apache.struts2.views.annotations.StrutsTag;
 import org.apache.struts2.views.annotations.StrutsTagAttribute;
 import org.apache.struts2.views.jsp.StrutsBodyTagSupport;
 
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
+import javax.servlet.jsp.JspException;
 
 
 /**
@@ -112,7 +111,7 @@ import com.opensymphony.xwork2.util.logging.LoggerFactory;
  *
  * <pre>
  * <!-- START SNIPPET: example3 -->
- * &lt;!--  C: List with start -->
+ * &lt;!--  C: List with start --&gt;
  *      &lt;s:subset source="myList" count="13" start="3"&gt;
  *         &lt;s:iterator&gt;
  *           &lt;s:property /&gt;
@@ -146,7 +145,7 @@ import com.opensymphony.xwork2.util.logging.LoggerFactory;
  * </pre>
  *
  *
- * @s.tag name="subset" tld-body-content="JSP"
+ * {@literal @}s.tag name="subset" tld-body-content="JSP"
  * description="Takes an iterator and outputs a subset of it"
  */
 @StrutsTag(name="subset", tldTagClass="org.apache.struts2.views.jsp.iterator.SubsetIteratorTag",
@@ -155,7 +154,7 @@ public class SubsetIteratorTag extends StrutsBodyTagSupport {
 
     private static final long serialVersionUID = -6252696081713080102L;
 
-    private static final Logger LOG = LoggerFactory.getLogger(SubsetIteratorTag.class);
+    private static final Logger LOG = LogManager.getLogger(SubsetIteratorTag.class);
 
     String countAttr;
     String sourceAttr;
@@ -176,8 +175,10 @@ public class SubsetIteratorTag extends StrutsBodyTagSupport {
     }
 
     /**
-     * @s.tagattribute required="false" type="Integer"
+     * {@literal @}s.tagattribute required="false" type="Integer"
      * description="Indicate the starting index (eg. first entry is 0) of entries in the source to be available as the first entry in the resulting subset iterator"
+     *
+     * @param start start
      */
     @StrutsTagAttribute(type="Integer",
             description="Indicate the starting index (eg. first entry is 0) of entries in the source to be available as the first entry in the resulting subset iterator")
@@ -189,11 +190,6 @@ public class SubsetIteratorTag extends StrutsBodyTagSupport {
             description="Extension to plug-in a decider to determine if that particular entry is to be included in the resulting subset iterator")
     public void setDecider(String decider) {
         deciderAttr = decider;
-    }
-
-    @StrutsTagAttribute(description="Deprecated. Use 'var' instead")
-    public void setId(String string) {
-        setVar(string);
     }
 
     @StrutsTagAttribute(description="The name to store the resultant iterator into page context, if such name is supplied")
@@ -223,9 +219,7 @@ public class SubsetIteratorTag extends StrutsBodyTagSupport {
                     count = Integer.parseInt((String)countObj);
                 }
                 catch(NumberFormatException e) {
-                    if (LOG.isWarnEnabled()) {
-                	LOG.warn("unable to convert count attribute ["+countObj+"] to number, ignore count attribute", e);
-                    }
+                    LOG.warn("unable to convert count attribute [{}] to number, ignore count attribute", countObj, e);
                 }
             }
         }
@@ -251,9 +245,7 @@ public class SubsetIteratorTag extends StrutsBodyTagSupport {
                     start = Integer.parseInt((String)startObj);
                 }
                 catch(NumberFormatException e) {
-                    if (LOG.isWarnEnabled()) {
-                	LOG.warn("unable to convert count attribute ["+startObj+"] to number, ignore count attribute", e);
-                    }
+                    LOG.warn("unable to convert count attribute [{}] to number, ignore count attribute", startObj, e);
                 }
             }
         }

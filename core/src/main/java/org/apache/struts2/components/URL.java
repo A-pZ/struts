@@ -23,8 +23,6 @@ package org.apache.struts2.components;
 
 import com.opensymphony.xwork2.inject.Inject;
 import com.opensymphony.xwork2.util.ValueStack;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
 import org.apache.struts2.StrutsConstants;
 import org.apache.struts2.views.annotations.StrutsTag;
 import org.apache.struts2.views.annotations.StrutsTagAttribute;
@@ -52,8 +50,8 @@ import java.io.Writer;
  * <p>When includeParams is 'all' or 'get', the parameter defined in a &lt;param&gt;
  * tag will take precedence over any params included due to the includeParams attribute. For
  * example, in Example 3 below, if there is a id parameter in the url where the page this
- * tag is included like http://&lt;host&gt;:&lt;port&gt;/&lt;context&gt;/editUser.action?id=3333&name=John
- * the generated url will be http://&lt;host&gt;:&lt;port&gt;/&lt;context&gt;/editUser.action?id=22&name=John
+ * tag is included like http://&lt;host&gt;:&lt;port&gt;/&lt;context&gt;/editUser.action?id=3333&amp;name=John
+ * the generated url will be http://&lt;host&gt;:&lt;port&gt;/&lt;context&gt;/editUser.action?id=22&amp;name=John
  * because the parameter defined in the param tag will take precedence.</p>
  *
  * <!-- END SNIPPET: javadoc -->
@@ -83,7 +81,7 @@ import java.io.Writer;
  *
  * <!-- END SNIPPET: params -->
  *
- * <p/> <b>Examples</b>
+ * <p><b>Examples</b></p>
  * <pre>
  * <!-- START SNIPPET: example -->
  *
@@ -110,7 +108,7 @@ import java.io.Writer;
  */
 @StrutsTag(name="url", tldTagClass="org.apache.struts2.views.jsp.URLTag", description="This tag is used to create a URL")
 public class URL extends ContextBean {
-    private static final Logger LOG = LoggerFactory.getLogger(URL.class);
+
     private UrlProvider urlProvider;
     private UrlRenderer urlRenderer;
 

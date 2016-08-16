@@ -42,6 +42,7 @@ import java.io.File;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -352,7 +353,7 @@ public class URLTagTest extends AbstractUITagTest {
     public void testPutId() throws Exception {
         tag.setValue("/public/about");
         assertEquals(null, stack.findString("myId")); // nothing in stack
-        tag.setId("myId");
+        tag.setVar("myId");
         tag.doStartTag();
         tag.doEndTag();
         assertEquals("", writer.toString());
@@ -548,7 +549,6 @@ public class URLTagTest extends AbstractUITagTest {
 
         mockContainer = new Mock(Container.class);
 
-        du.setConfigurationManager(configurationManager);
         session = new SessionMap(request);
         Map<String, Object> extraContext = du.createContextMap(new RequestMap(request),
                 request.getParameterMap(),
@@ -571,7 +571,7 @@ public class URLTagTest extends AbstractUITagTest {
         ActionContext.getContext().setActionInvocation(new DefaultActionInvocation(null, true));
         DefaultActionProxyFactory apFactory = new DefaultActionProxyFactory();
         apFactory.setContainer(container);
-        ActionProxy ap = apFactory.createActionProxy("/", "hello", null);
+        ActionProxy ap = apFactory.createActionProxy("/", "hello", null, null);
         ActionContext.getContext().getActionInvocation().init(ap);
 
         request.setScheme("http");
@@ -639,11 +639,11 @@ public class URLTagTest extends AbstractUITagTest {
 	}
 
 	public void testAccessToStackInternalsGetsHandledCorrectly() throws Exception {
-		Map<String, Object> params = new HashMap<String, Object>();
+		Map<String, Object> params = new LinkedHashMap<>();
 		params.put("aaa", new String[] {"1${#session[\"foo\"]='true'}"});
-		params.put("aab", new String[] {"1${#session[\"bar\"]}"});
-		params.put("aac", new String[] {"1${#_memberAccess[\"allowStaticMethodAccess\"]='true'}"});
-		params.put("aad", new String[] {"1${#_memberAccess[\"allowStaticMethodAccess\"]}"});
+		params.put("aab", new String[]{"1${#session[\"bar\"]}"});
+		params.put("aac", new String[]{"1${#_memberAccess[\"allowStaticMethodAccess\"]='true'}"});
+		params.put("aad", new String[]{"1${#_memberAccess[\"allowStaticMethodAccess\"]}"});
 
 		request.setParameterMap(params);
 		request.setRequestURI("/public/about");
@@ -657,21 +657,19 @@ public class URLTagTest extends AbstractUITagTest {
 		tag.doEndTag();
 
 		Object allowMethodAccess = stack.findValue("\u0023_memberAccess['allowStaticMethodAccess']");
-		assertNotNull(allowMethodAccess);
-		assertEquals(Boolean.FALSE, allowMethodAccess);
+		assertNull(allowMethodAccess);
 
 		assertNull(session.get("foo"));
 
-		assertEquals("/team.action?" +
-							 "aab=1%24%7B%23session%5B%22bar%22%5D%7D" +
-							 "&amp;" +
-							 "aac=1%24%7B%23_memberAccess%5B%22allowStaticMethodAccess%22%5D%3D%27true%27%7D" +
-							 "&amp;" +
-							 "aaa=1%24%7B%23session%5B%22foo%22%5D%3D%27true%27%7D" +
-							 "&amp;" +
-							 "aad=1%24%7B%23_memberAccess%5B%22allowStaticMethodAccess%22%5D%7D" +
-							 "&amp;"+
-						     "aae%24%7B%23session%5B%22bar%22%5D%7D=1%24%7B%23session%5B%22bar%22%5D%7D"
+		assertEquals("/team.action?aaa=1%24%7B%23session%5B%22foo%22%5D%3D%27true%27%7D" +
+                        "&amp;" +
+                        "aab=1%24%7B%23session%5B%22bar%22%5D%7D" +
+                        "&amp;" +
+                        "aac=1%24%7B%23_memberAccess%5B%22allowStaticMethodAccess%22%5D%3D%27true%27%7D" +
+                        "&amp;" +
+                        "aad=1%24%7B%23_memberAccess%5B%22allowStaticMethodAccess%22%5D%7D" +
+                        "&amp;" +
+                        "aae%24%7B%23session%5B%22bar%22%5D%7D=1%24%7B%23session%5B%22bar%22%5D%7D"
 				, writer.toString()
 		);
 	}

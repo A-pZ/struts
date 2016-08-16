@@ -8,18 +8,18 @@
 </div>
 
 <div class="container-fluid">
-	<div class="row-fluid">
-		<div class="span3">
+	<div class="row">
+		<div class="col-md-3">
 			<ul class="nav nav-tabs nav-stacked">
-				<@s.url id="listpeopleurl" action="list-people" />
+				<@s.url var="listpeopleurl" action="list-people" />
 				<li class="active"><@s.a href="%{listpeopleurl}">List all people</@s.a></li>
-				<@s.url id="editpersonurl" action="edit-person" />
+				<@s.url var="editpersonurl" action="edit-person" />
 				<li><@s.a href="%{editpersonurl}">Edit people</@s.a></li>
-				<@s.url id="newpersonurl" action="new-person" method="input" />
+				<@s.url var="newpersonurl" action="new-person" method="input" />
 				<li><@s.a href="%{newpersonurl}">Create a new person</@s.a></li>
 			</ul>
 		</div>
-		<div class="span9">
+		<div class="col-md-9">
 
 			<p>There are ${peopleCount} people...</p>
 

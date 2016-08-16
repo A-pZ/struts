@@ -20,8 +20,8 @@
  */
 package org.apache.struts2.portlet.util;
 
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.struts2.StrutsException;
 import org.apache.struts2.portlet.context.PortletActionContext;
@@ -53,7 +53,7 @@ import static org.apache.struts2.portlet.PortletConstants.MODE_PARAM;
 public class PortletUrlHelper {
     public static final String ENCODING = "UTF-8";
 
-    private static final Logger LOG = LoggerFactory.getLogger(PortletUrlHelper.class);
+    private static final Logger LOG = LogManager.getLogger(PortletUrlHelper.class);
 
     protected static final String PORTLETMODE_NAME_EDIT = "edit";
     protected static final String PORTLETMODE_NAME_VIEW = "view";
@@ -82,6 +82,19 @@ public class PortletUrlHelper {
 
     /**
      * Create a portlet URL with for the specified action and namespace.
+     *
+     * @param action The action the URL should invoke.
+     * @param namespace The namespace of the action to invoke.
+     * @param method The method of the action to invoke.
+     * @param params The parameters of the URL.
+     * @param type The type of the url, either <tt>action</tt> or <tt>render</tt>
+     * @param scheme The scheme of the URL.
+     * @param portletMode The Portlet Mode of the URL.
+     * @param windowState  The Window State
+     * @param includeContext true for including context
+     * @param encodeResult true for encode of the result
+     *
+     * @return The URL String.
      *
      * @see #buildUrl(String, String, String, java.util.Map, String, String, String)
      */
@@ -218,7 +231,8 @@ public class PortletUrlHelper {
      * Encode an url to a non Struts action resource, like stylesheet, image or
      * servlet.
      *
-     * @param value
+     * @param value base url
+     * @param params url parameters
      * @return encoded url to non Struts action resources.
      */
     public String buildResourceUrl(String value, Map params) {

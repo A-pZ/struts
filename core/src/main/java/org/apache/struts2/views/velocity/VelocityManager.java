@@ -25,14 +25,13 @@ import com.opensymphony.xwork2.ObjectFactory;
 import com.opensymphony.xwork2.inject.Container;
 import com.opensymphony.xwork2.inject.Inject;
 import com.opensymphony.xwork2.util.ValueStack;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.struts2.ServletActionContext;
 import org.apache.struts2.StrutsConstants;
 import org.apache.struts2.StrutsException;
 import org.apache.struts2.util.VelocityStrutsUtil;
-import org.apache.struts2.views.TagLibrary;
 import org.apache.struts2.views.TagLibraryDirectiveProvider;
 import org.apache.struts2.views.jsp.ui.OgnlTool;
 import org.apache.struts2.views.util.ContextUtil;
@@ -51,22 +50,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.StringTokenizer;
+import java.util.*;
 
 
 /**
  * Manages the environment for Velocity result types
- *
  */
 public class VelocityManager {
-    private static final Logger LOG = LoggerFactory.getLogger(VelocityManager.class);
+    private static final Logger LOG = LogManager.getLogger(VelocityManager.class);
     public static final String STRUTS = "struts";
     private ObjectFactory objectFactory;
 
@@ -101,7 +92,6 @@ public class VelocityManager {
     private String customConfigFile;
 
     private List<TagLibraryDirectiveProvider> tagLibraries;
-    private List<TagLibrary> oldTagLibraries;
 
     @Inject
     public void setObjectFactory(ObjectFactory fac) {
@@ -110,19 +100,12 @@ public class VelocityManager {
 
     @Inject
     public void setContainer(Container container) {
-        List<TagLibraryDirectiveProvider> list = new ArrayList<TagLibraryDirectiveProvider>();
+        List<TagLibraryDirectiveProvider> list = new ArrayList<>();
         Set<String> prefixes = container.getInstanceNames(TagLibraryDirectiveProvider.class);
         for (String prefix : prefixes) {
             list.add(container.getInstance(TagLibraryDirectiveProvider.class, prefix));
         }
         this.tagLibraries = Collections.unmodifiableList(list);
-
-        List<TagLibrary> oldList = new ArrayList<TagLibrary>();
-        Set<String> oldPrefixes = container.getInstanceNames(TagLibrary.class);
-        for (String prefix : oldPrefixes) {
-            oldList.add(container.getInstance(TagLibrary.class, prefix));
-        }
-        this.oldTagLibraries = Collections.unmodifiableList(oldList);
     }
 
     /**
@@ -134,9 +117,11 @@ public class VelocityManager {
     }
 
     /**
+     * <p>
      * This method is responsible for creating the standard VelocityContext used by all WW2 velocity views.  The
      * following context parameters are defined:
-     * <p/>
+     * </p>
+     *
      * <ul>
      * <li><strong>request</strong> - the current HttpServletRequest</li>
      * <li><strong>response</strong> - the current HttpServletResponse</li>
@@ -146,6 +131,9 @@ public class VelocityManager {
      * <li><strong>action</strong> - the current Struts action</li>
      * </ul>
      *
+     * @param stack the current {@link ValueStack}
+     * @param req the current HttpServletRequest
+     * @param res the current HttpServletResponse
      * @return a new StrutsVelocityContext
      */
     public Context createContext(ValueStack stack, HttpServletRequest req, HttpServletResponse res) {
@@ -165,9 +153,7 @@ public class VelocityManager {
             ctx = ServletActionContext.getServletContext();
         } catch (NullPointerException npe) {
             // in case this was used outside the lifecycle of struts servlet
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("internal toolbox context ignored");
-            }
+            LOG.debug("internal toolbox context ignored");
         }
 
         if (toolboxManager != null && ctx != null) {
@@ -187,9 +173,9 @@ public class VelocityManager {
      * perform any initialization of the contexts.  All that must be done in the
      * context itself.
      *
-     * @param servletRequest
-     * @param servletResponse
-     * @param extraContext
+     * @param servletRequest the servlet request object
+     * @param servletResponse the servlet response object
+     * @param extraContext map with extra context
      * @return an VelocityContext[] of contexts to chain
      */
     protected VelocityContext[] prepareChainedContexts(HttpServletRequest servletRequest, HttpServletResponse servletResponse, Map extraContext) {
@@ -203,9 +189,7 @@ public class VelocityManager {
                 VelocityContext velocityContext = (VelocityContext) objectFactory.buildBean(className, null);
                 contextList.add(velocityContext);
             } catch (Exception e) {
-                if (LOG.isWarnEnabled()) {
-                    LOG.warn("Warning.  " + e.getClass().getName() + " caught while attempting to instantiate a chained VelocityContext, " + className + " -- skipping");
-                }
+                LOG.warn("Warning. {} caught while attempting to instantiate a chained VelocityContext, {} -- skipping", e.getClass().getName(), className);
             }
         }
         if (contextList.size() > 0) {
@@ -312,15 +296,11 @@ public class VelocityManager {
 
             // if we've got something, load 'er up
             if (in != null) {
-                if (LOG.isInfoEnabled()) {
-                    LOG.info("Initializing velocity using " + resourceLocation);
-                }
+                LOG.info("Initializing velocity using {}", resourceLocation);
                 properties.load(in);
             }
         } catch (IOException e) {
-            if (LOG.isWarnEnabled()) {
-        	LOG.warn("Unable to load velocity configuration " + resourceLocation, e);
-            }
+            LOG.warn("Unable to load velocity configuration {}", resourceLocation, e);
         } finally {
             if (in != null) {
                 try {
@@ -354,14 +334,10 @@ public class VelocityManager {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Initializing Velocity with the following properties ...");
 
-            for (Iterator iter = properties.keySet().iterator();
-                 iter.hasNext();) {
+            for (Iterator iter = properties.keySet().iterator(); iter.hasNext(); ) {
                 String key = (String) iter.next();
                 String value = properties.getProperty(key);
-
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("    '" + key + "' = '" + value + "'");
-                }
+                LOG.debug("    '{}' = '{}'", key, value);
             }
         }
 
@@ -387,12 +363,14 @@ public class VelocityManager {
      * the StrutsVelocityContext.  The intent is to allow these contexts to store helper objects that the ui
      * developer may want access to.  Examples of reasonable VelocityContexts would be an IoCVelocityContext, a
      * SpringReferenceVelocityContext, and a ToolboxVelocityContext
+     *
+     * @param contexts comma separated velocity context's
      */
     @Inject(StrutsConstants.STRUTS_VELOCITY_CONTEXTS)
     public void setChainedContexts(String contexts) {
         // we expect contexts to be a comma separated list of classnames
         StringTokenizer st = new StringTokenizer(contexts, ",");
-        List<String> contextList = new ArrayList<String>();
+        List<String> contextList = new ArrayList<>();
 
         while (st.hasMoreTokens()) {
             String classname = st.nextToken();
@@ -408,6 +386,8 @@ public class VelocityManager {
     /**
      * Initializes the ServletToolboxManager for this servlet's
      * toolbox (if any).
+     *
+     * @param context the servlet context
      */
     protected void initToolbox(ServletContext context) {
         /* if we have a toolbox, get a manager for it */
@@ -422,29 +402,33 @@ public class VelocityManager {
 
 
     /**
-     * <p/>
+     * <p>
      * Instantiates a new VelocityEngine.
      * </p>
-     * <p/>
+     * <p>
      * The following is the default Velocity configuration
      * </p>
+     *
      * <pre>
      *  resource.loader = file, class
      *  file.resource.loader.path = real path of webapp
      *  class.resource.loader.description = Velocity Classpath Resource Loader
      *  class.resource.loader.class = org.apache.struts2.views.velocity.StrutsResourceLoader
      * </pre>
-     * <p/>
+     * <p>
      * this default configuration can be overridden by specifying a struts.velocity.configfile property in the
      * struts.properties file.  the specified config file will be searched for in the following order:
      * </p>
+     *
      * <ul>
      * <li>relative to the servlet context path</li>
      * <li>relative to the WEB-INF directory</li>
      * <li>on the classpath</li>
      * </ul>
      *
-     * @param context the current ServletContext.  may <b>not</b> be null
+     * @param context the current ServletContext. may <b>not</b> be null
+     *
+     * @return the new velocity engine
      */
     protected VelocityEngine newVelocityEngine(ServletContext context) {
         if (context == null) {
@@ -479,18 +463,18 @@ public class VelocityManager {
      * <li>we need to define the various Struts custom user directives such as #param, #tag, and #bodytag</li>
      * </ul>
      *
-     * @param context
-     * @param p
+     * @param context the servlet context
+     * @param properties velocity properties
      */
-    private void applyDefaultConfiguration(ServletContext context, Properties p) {
+    private void applyDefaultConfiguration(ServletContext context, Properties properties) {
         // ensure that caching isn't overly aggressive
 
         /**
          * Load a default resource loader definition if there isn't one present.
          * Ben Hall (22/08/2003)
          */
-        if (p.getProperty(Velocity.RESOURCE_LOADER) == null) {
-            p.setProperty(Velocity.RESOURCE_LOADER, "strutsfile, strutsclass");
+        if (properties.getProperty(Velocity.RESOURCE_LOADER) == null) {
+            properties.setProperty(Velocity.RESOURCE_LOADER, "strutsfile, strutsclass");
         }
 
         /**
@@ -500,14 +484,14 @@ public class VelocityManager {
          * Ben Hall (22/08/2003)
          */
         if (context.getRealPath("") != null) {
-            p.setProperty("strutsfile.resource.loader.description", "Velocity File Resource Loader");
-            p.setProperty("strutsfile.resource.loader.class", "org.apache.velocity.runtime.resource.loader.FileResourceLoader");
-            p.setProperty("strutsfile.resource.loader.path", context.getRealPath(""));
-            p.setProperty("strutsfile.resource.loader.modificationCheckInterval", "2");
-            p.setProperty("strutsfile.resource.loader.cache", "true");
+            properties.setProperty("strutsfile.resource.loader.description", "Velocity File Resource Loader");
+            properties.setProperty("strutsfile.resource.loader.class", "org.apache.velocity.runtime.resource.loader.FileResourceLoader");
+            properties.setProperty("strutsfile.resource.loader.path", context.getRealPath(""));
+            properties.setProperty("strutsfile.resource.loader.modificationCheckInterval", "2");
+            properties.setProperty("strutsfile.resource.loader.cache", "true");
         } else {
             // remove strutsfile from resource loader property
-            String prop = p.getProperty(Velocity.RESOURCE_LOADER);
+            String prop = properties.getProperty(Velocity.RESOURCE_LOADER);
             if (prop.indexOf("strutsfile,") != -1) {
                 prop = replace(prop, "strutsfile,", "");
             } else if (prop.indexOf(", strutsfile") != -1) {
@@ -516,7 +500,7 @@ public class VelocityManager {
                 prop = replace(prop, "strutsfile", "");
             }
 
-            p.setProperty(Velocity.RESOURCE_LOADER, prop);
+            properties.setProperty(Velocity.RESOURCE_LOADER, prop);
         }
 
         /**
@@ -525,10 +509,10 @@ public class VelocityManager {
          * Unfortunately, there does not appear to be a macro for the class loader keywords
          * Matt Ho - Mon Mar 17 00:21:46 PST 2003
          */
-        p.setProperty("strutsclass.resource.loader.description", "Velocity Classpath Resource Loader");
-        p.setProperty("strutsclass.resource.loader.class", "org.apache.struts2.views.velocity.StrutsResourceLoader");
-        p.setProperty("strutsclass.resource.loader.modificationCheckInterval", "2");
-        p.setProperty("strutsclass.resource.loader.cache", "true");
+        properties.setProperty("strutsclass.resource.loader.description", "Velocity Classpath Resource Loader");
+        properties.setProperty("strutsclass.resource.loader.class", "org.apache.struts2.views.velocity.StrutsResourceLoader");
+        properties.setProperty("strutsclass.resource.loader.modificationCheckInterval", "2");
+        properties.setProperty("strutsclass.resource.loader.cache", "true");
 
         // components
         StringBuilder sb = new StringBuilder();
@@ -540,23 +524,16 @@ public class VelocityManager {
             }
         }
 
-        for (TagLibrary tagLibrary : oldTagLibraries) {
-            List<Class> directives = tagLibrary.getVelocityDirectiveClasses();
-            for (Class directive : directives) {
-                addDirective(sb, directive);
-            }
-        }
-
         String directives = sb.toString();
 
-        String userdirective = p.getProperty("userdirective");
+        String userdirective = properties.getProperty("userdirective");
         if ((userdirective == null) || userdirective.trim().equals("")) {
             userdirective = directives;
         } else {
             userdirective = userdirective.trim() + "," + directives;
         }
 
-        p.setProperty("userdirective", userdirective);
+        properties.setProperty("userdirective", userdirective);
     }
 
     private void addDirective(StringBuilder sb, Class clazz) {

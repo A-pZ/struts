@@ -23,36 +23,26 @@ package org.apache.struts2.views.jasperreports;
 
 import com.opensymphony.xwork2.ActionInvocation;
 import com.opensymphony.xwork2.util.ValueStack;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
-import net.sf.jasperreports.engine.JRException;
-import net.sf.jasperreports.engine.JRExporter;
-import net.sf.jasperreports.engine.JRExporterParameter;
-import net.sf.jasperreports.engine.JRParameter;
-import net.sf.jasperreports.engine.JasperFillManager;
-import net.sf.jasperreports.engine.JasperPrint;
-import net.sf.jasperreports.engine.JasperReport;
-import net.sf.jasperreports.engine.export.JRCsvExporter;
-import net.sf.jasperreports.engine.export.JRCsvExporterParameter;
-import net.sf.jasperreports.engine.export.JRHtmlExporter;
-import net.sf.jasperreports.engine.export.JRHtmlExporterParameter;
-import net.sf.jasperreports.engine.export.JRPdfExporter;
-import net.sf.jasperreports.engine.export.JRRtfExporter;
-import net.sf.jasperreports.engine.export.JRXlsExporter;
-import net.sf.jasperreports.engine.export.JRXmlExporter;
+
+import net.sf.jasperreports.engine.*;
+import net.sf.jasperreports.engine.export.*;
 import net.sf.jasperreports.engine.util.JRLoader;
+
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.struts2.ServletActionContext;
-import org.apache.struts2.dispatcher.StrutsResultSupport;
+import org.apache.struts2.result.StrutsResultSupport;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
-import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.sql.Connection;
 import java.util.HashMap;
 import java.util.Map;
@@ -60,18 +50,18 @@ import java.util.TimeZone;
 
 /**
  * <!-- START SNIPPET: description -->
- * <p/>
+ * <p>
  * Generates a JasperReports report using the specified format or PDF if no
  * format is specified.
- * <p/>
+ * </p>
  * <!-- END SNIPPET: description -->
- * <p />
+ * <p>
  * <b>This result type takes the following parameters:</b>
- * <p/>
+ * </p>
  * <!-- START SNIPPET: params -->
- * <p/>
+ *
  * <ul>
- * <p/>
+ *
  * <li><b>location (default)</b> - the location where the compiled jasper report
  * definition is (foo.jasper), relative from current URL.</li>
  * <li><b>dataSource (required)</b> - the EL expression used to retrieve the
@@ -115,27 +105,33 @@ import java.util.TimeZone;
  * is not set to false.
  * </p>
  * <!-- END SNIPPET: params -->
- * <b>Example:</b>
- * <pre><!-- START SNIPPET: example1 -->
+ * <p><b>Example:</b></p>
+ * <pre>
+ * <!-- START SNIPPET: example1 -->
  * &lt;result name="success" type="jasper"&gt;
  *   &lt;param name="location"&gt;foo.jasper&lt;/param&gt;
  *   &lt;param name="dataSource"&gt;mySource&lt;/param&gt;
  *   &lt;param name="format"&gt;CSV&lt;/param&gt;
  * &lt;/result&gt;
- * <!-- END SNIPPET: example1 --></pre>
+ * <!-- END SNIPPET: example1 -->
+ * </pre>
+ *
  * or for pdf
- * <pre><!-- START SNIPPET: example2 -->
+ *
+ * <pre>
+ * <!-- START SNIPPET: example2 -->
  * &lt;result name="success" type="jasper"&gt;
  *   &lt;param name="location"&gt;foo.jasper&lt;/param&gt;
  *   &lt;param name="dataSource"&gt;mySource&lt;/param&gt;
  * &lt;/result&gt;
- * <!-- END SNIPPET: example2 --></pre>
+ * <!-- END SNIPPET: example2 -->
+ * </pre>
  */
 public class JasperReportsResult extends StrutsResultSupport implements JasperReportConstants {
 
     private static final long serialVersionUID = -2523174799621182907L;
 
-    private final static Logger LOG = LoggerFactory.getLogger(JasperReportsResult.class);
+    private final static Logger LOG = LogManager.getLogger(JasperReportsResult.class);
 
     protected String dataSource;
     protected String format;
@@ -249,9 +245,7 @@ public class JasperReportsResult extends StrutsResultSupport implements JasperRe
         // Will throw a runtime exception if no "datasource" property. TODO Best place for that is...?
         initializeProperties(invocation);
 
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Creating JasperReport for dataSource = " + dataSource + ", format = " + format);
-        }
+        LOG.debug("Creating JasperReport for dataSource = {}, format = {}", dataSource, format);
 
         HttpServletRequest request = (HttpServletRequest) invocation.getInvocationContext().get(ServletActionContext.HTTP_REQUEST);
         HttpServletResponse response = (HttpServletResponse) invocation.getInvocationContext().get(ServletActionContext.HTTP_RESPONSE);
@@ -259,12 +253,9 @@ public class JasperReportsResult extends StrutsResultSupport implements JasperRe
         // Handle IE special case: it sends a "contype" request first.
         // TODO Set content type to config settings?
         if ("contype".equals(request.getHeader("User-Agent"))) {
-            try {
+            try (OutputStream outputStream = response.getOutputStream()) {
                 response.setContentType("application/pdf");
                 response.setContentLength(0);
-
-                ServletOutputStream outputStream = response.getOutputStream();
-                outputStream.close();
             } catch (IOException e) {
                 LOG.error("Error writing report output", e);
                 throw new ServletException(e.getMessage(), e);
@@ -311,24 +302,24 @@ public class JasperReportsResult extends StrutsResultSupport implements JasperRe
         // Add any report parameters from action to param map.
         Map reportParams = (Map) stack.findValue(reportParameters);
         if (reportParams != null) {
-            if (LOG.isDebugEnabled()) {
         	LOG.debug("Found report parameters; adding to parameters...");
-            }
             parameters.putAll(reportParams);
         }
 
-        byte[] output;
+        ByteArrayOutputStream output;
         JasperPrint jasperPrint;
 
         // Fill the report and produce a print object
         try {
-            JasperReport jasperReport = (JasperReport) JRLoader.loadObject(systemId);
-            if (conn == null)
+            JasperReport jasperReport = (JasperReport) JRLoader.loadObject(new File(systemId));
+            if (conn == null) {
                 jasperPrint = JasperFillManager.fillReport(jasperReport, parameters, stackDataSource);
-            else
+            }
+            else {
                 jasperPrint = JasperFillManager.fillReport(jasperReport, parameters, conn);
+            }
         } catch (JRException e) {
-            LOG.error("Error building report for uri " + systemId, e);
+            LOG.error("Error building report for uri {}", systemId, e);
             throw new ServletException(e.getMessage(), e);
         }
 
@@ -386,21 +377,23 @@ public class JasperReportsResult extends StrutsResultSupport implements JasperRe
 
             Map exportParams = (Map) stack.findValue(exportParameters);
             if (exportParams != null) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Found export parameters; adding to exporter parameters...");
-                }
+                LOG.debug("Found export parameters; adding to exporter parameters...");
                 exporter.getParameters().putAll(exportParams);
             }
 
             output = exportReportToBytes(jasperPrint, exporter);
         } catch (JRException e) {
-            String message = "Error producing " + format + " report for uri " + systemId;
-            LOG.error(message, e);
+            LOG.error("Error producing {} report for uri {}", format, systemId, e);
             throw new ServletException(e.getMessage(), e);
+        } finally {
+            try {
+                conn.close();
+            } catch (Exception e) {
+                LOG.warn("Could not close db connection properly", e);
+            }
         }
 
-        response.setContentLength(output.length);
-
+        response.setContentLength(output.size());
         // Will throw ServletException on IOException.
         writeReport(response, output);
     }
@@ -412,24 +405,13 @@ public class JasperReportsResult extends StrutsResultSupport implements JasperRe
      * @param output   Report bytes to write.
      * @throws ServletException on stream IOException.
      */
-    private void writeReport(HttpServletResponse response, byte[] output) throws ServletException {
-        ServletOutputStream outputStream = null;
-        try {
-            outputStream = response.getOutputStream();
-            outputStream.write(output);
+    private void writeReport(HttpServletResponse response, ByteArrayOutputStream output) throws ServletException {
+        try (OutputStream outputStream = response.getOutputStream()) {
+            output.writeTo(outputStream);
             outputStream.flush();
         } catch (IOException e) {
             LOG.error("Error writing report output", e);
             throw new ServletException(e.getMessage(), e);
-        } finally {
-            try {
-                if (outputStream != null) {
-                    outputStream.close();
-                }
-            } catch (IOException e) {
-                LOG.error("Error closing report output stream", e);
-                throw new ServletException(e.getMessage(), e);
-            }
         }
     }
 
@@ -474,8 +456,7 @@ public class JasperReportsResult extends StrutsResultSupport implements JasperRe
      * @throws net.sf.jasperreports.engine.JRException
      *          If there is a problem running the report
      */
-    private byte[] exportReportToBytes(JasperPrint jasperPrint, JRExporter exporter) throws JRException {
-        byte[] output;
+    private ByteArrayOutputStream exportReportToBytes(JasperPrint jasperPrint, JRExporter exporter) throws JRException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         exporter.setParameter(JRExporterParameter.JASPER_PRINT, jasperPrint);
@@ -485,10 +466,7 @@ public class JasperReportsResult extends StrutsResultSupport implements JasperRe
         }
 
         exporter.exportReport();
-
-        output = baos.toByteArray();
-
-        return output;
+        return baos;
     }
 
 }

@@ -21,51 +21,49 @@
 
 package org.apache.struts2.views.xslt;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.w3c.dom.*;
+
 import java.util.ArrayList;
 import java.util.List;
 
-import org.w3c.dom.Attr;
-import org.w3c.dom.DOMException;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.w3c.dom.TypeInfo;
-
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
-
 /**
+ * <p>
  * ProxyElementAdapter is a pass-through adapter for objects which already
  * implement the Element interface.  All methods are proxied to the underlying
  * Node except getParent(), getNextSibling() and getPreviousSibling(), which
  * are implemented by the abstract adapter node to work with the parent adapter.
+ * </p>
  *
+ * <p>
  * Note: this class wants to be (extend) both an AbstractElementAdapter
  * and ProxyElementAdapter, but its proxy-ness is winning right now.
+ * </p>
  */
 public class ProxyElementAdapter extends ProxyNodeAdapter implements Element {
 
-    private Logger log = LoggerFactory.getLogger(this.getClass());
+    private Logger log = LogManager.getLogger(this.getClass());
 
     public ProxyElementAdapter(AdapterFactory factory, AdapterNode parent, Element value) {
         super(factory, parent, value);
     }
 
     /**
-     * Get the proxied Element
+     * @return the proxied Element
      */
     protected Element element() {
         return (Element) getPropertyValue();
     }
 
     protected List<Node> buildChildAdapters() {
-        List<Node> adapters = new ArrayList<Node>();
+        List<Node> adapters = new ArrayList<>();
         NodeList children = node().getChildNodes();
         for (int i = 0; i < children.getLength(); i++) {
             Node child = children.item(i);
             Node adapter = wrap(child);
             if (adapter != null) {
-                log.debug("wrapped child node: " + child.getNodeName());
+                log.debug("Wrapped child node: {}", child.getNodeName());
                 adapters.add(adapter);
             }
         }
@@ -91,7 +89,7 @@ public class ProxyElementAdapter extends ProxyNodeAdapter implements Element {
     }
 
     public Attr getAttributeNode(String name) {
-        log.debug("wrapping attribute");
+        log.debug("Wrapping attribute: {}", name);
         return (Attr) wrap(element().getAttributeNode(name));
     }
 

@@ -24,11 +24,11 @@ import com.opensymphony.xwork2.ActionContext;
 import com.opensymphony.xwork2.ActionInvocation;
 import com.opensymphony.xwork2.inject.Inject;
 import com.opensymphony.xwork2.util.ValueStack;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import org.apache.struts2.ServletActionContext;
 import org.apache.struts2.StrutsConstants;
-import org.apache.struts2.dispatcher.StrutsResultSupport;
+import org.apache.struts2.result.StrutsResultSupport;
 import org.apache.struts2.portlet.PortletConstants;
 import org.apache.struts2.portlet.PortletPhase;
 import org.apache.struts2.portlet.context.PortletActionContext;
@@ -55,8 +55,8 @@ import java.io.Writer;
  * execution environment and then displays a Velocity template that will be
  * streamed directly to the servlet output.
  *
- * <!-- END SNIPPET: description --> <p/><b>This result type takes the
- * following parameters: </b>
+ * <!-- END SNIPPET: description -->
+ * <p><b>This result type takes the following parameters: </b></p>
  *
  * <!-- START SNIPPET: params -->
  *
@@ -75,7 +75,7 @@ import java.io.Writer;
  *
  * <!-- END SNIPPET: params -->
  *
- * <b>Example: </b>
+ * <p><b>Example: </b></p>
  *
  * <pre>
  * &lt;!-- START SNIPPET: example --&gt;
@@ -90,7 +90,7 @@ public class PortletVelocityResult extends StrutsResultSupport {
 
     private static final long serialVersionUID = -8241086555872212274L;
 
-    private static final Logger LOG = LoggerFactory.getLogger(PortletVelocityResult.class);
+    private static final Logger LOG = LogManager.getLogger(PortletVelocityResult.class);
     
     private String defaultEncoding;
     private VelocityManager velocityManager;
@@ -115,7 +115,7 @@ public class PortletVelocityResult extends StrutsResultSupport {
     }
 
     /* (non-Javadoc)
-     * @see org.apache.struts2.dispatcher.StrutsResultSupport#doExecute(java.lang.String, com.opensymphony.xwork2.ActionInvocation)
+     * @see org.apache.struts2.result.StrutsResultSupport#doExecute(java.lang.String, com.opensymphony.xwork2.ActionInvocation)
      */
     public void doExecute(String location, ActionInvocation invocation) throws Exception {
         PortletPhase phase = PortletActionContext.getPhase();
@@ -200,9 +200,11 @@ public class PortletVelocityResult extends StrutsResultSupport {
     }
 
     /**
-     * Retrieve the content type for this template. <p/>People can override
+     * Retrieve the content type for this template. <br>People can override
      * this method if they want to provide specific content types for specific
      * templates (eg text/xml).
+     *
+     * @param templateLocation location of templates
      *
      * @return The content type associated with this template (default
      *         "text/html")
@@ -212,8 +214,10 @@ public class PortletVelocityResult extends StrutsResultSupport {
     }
 
     /**
-     * Retrieve the encoding for this template. <p/>People can override this
+     * Retrieve the encoding for this template. <br>People can override this
      * method if they want to provide specific encodings for specific templates.
+     *
+     * @param templateLocation location of templates
      *
      * @return The encoding associated with this template (defaults to the value
      *         of 'struts.i18n.encoding' property)
@@ -256,6 +260,8 @@ public class PortletVelocityResult extends StrutsResultSupport {
      * @param velocityManager a reference to the velocityManager to use
      * @param stack the value stack to resolve the location against (when parse
      *        equals true)
+     * @param request servlet request
+     * @param response servlet response
      * @param location the name of the template that is being used
      * @return the a minted Velocity context.
      */

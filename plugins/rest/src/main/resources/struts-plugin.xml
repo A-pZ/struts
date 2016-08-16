@@ -22,8 +22,8 @@
  */
 -->
 <!DOCTYPE struts PUBLIC
-	"-//Apache Software Foundation//DTD Struts Configuration 2.3//EN"
-	"http://struts.apache.org/dtds/struts-2.3.dtd">
+        "-//Apache Software Foundation//DTD Struts Configuration 2.5//EN"
+        "http://struts.apache.org/dtds/struts-2.5.dtd">
 
 <struts>
 
@@ -48,10 +48,10 @@
 
     <package name="rest-default" extends="struts-default">
         <result-types>
-            <result-type name="redirect" class="org.apache.struts2.dispatcher.ServletRedirectResult">
+            <result-type name="redirect" class="org.apache.struts2.result.ServletRedirectResult">
                 <param name="statusCode">303</param>
             </result-type>
-            <result-type name="redirectAction" class="org.apache.struts2.dispatcher.ServletActionRedirectResult">
+            <result-type name="redirectAction" class="org.apache.struts2.result.ServletActionRedirectResult">
                 <param name="statusCode">303</param>
             </result-type>
         </result-types>
@@ -92,9 +92,7 @@
                 <interceptor-ref name="fileUpload"/>
                 <interceptor-ref name="checkbox"/>
                 <interceptor-ref name="staticParams"/>
-                <interceptor-ref name="params">
-                  <param name="excludeParams">dojo\..*</param>
-                </interceptor-ref>
+                <interceptor-ref name="params"/>
                 <interceptor-ref name="rest" />
                 <interceptor-ref name="conversionError"/>
                 <interceptor-ref name="validation">
@@ -110,6 +108,8 @@
         <default-interceptor-ref name="restDefaultStack"/>
 
         <default-class-ref class="org.apache.struts2.rest.RestActionSupport"/>
+
+        <global-allowed-methods>execute,input,back,cancel,browse,save,delete,list,index,show,create,update,destroy,edit,editNew</global-allowed-methods>
 
     </package>
 

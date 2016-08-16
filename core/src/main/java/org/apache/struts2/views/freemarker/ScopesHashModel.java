@@ -35,13 +35,19 @@ import java.util.Map;
 
 
 /**
+ * <p>
  * Simple Hash model that also searches other scopes.
- * <p/>
+ * </p>
+ *
+ * <p>
  * If the key doesn't exist in this hash, this template model tries to
  * resolve the key within the attributes of the following scopes,
  * in the order stated: Request, Session, Servlet Context
+ * </p>
  *
+ * <p>
  * Updated to subclass AllHttpScopesHashModel.java to incorporate invisible scopes and compatibility with freemarker.
+ * </p>
  */
 public class ScopesHashModel extends SimpleHash implements TemplateModel {
 
@@ -50,7 +56,7 @@ public class ScopesHashModel extends SimpleHash implements TemplateModel {
     private HttpServletRequest request;
     private ServletContext servletContext;
     private ValueStack stack;
-    private final Map<String,TemplateModel> unlistedModels = new HashMap<String,TemplateModel>();
+    private final Map<String, TemplateModel> unlistedModels = new HashMap<>();
     private volatile Object parametersCache;
 
     public ScopesHashModel(ObjectWrapper objectWrapper, ServletContext context, HttpServletRequest request, ValueStack stack) {

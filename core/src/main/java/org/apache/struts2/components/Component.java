@@ -25,9 +25,10 @@ import com.opensymphony.xwork2.inject.Inject;
 import com.opensymphony.xwork2.util.AnnotationUtils;
 import com.opensymphony.xwork2.util.TextParseUtil;
 import com.opensymphony.xwork2.util.ValueStack;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.struts2.StrutsConstants;
 import org.apache.struts2.StrutsException;
 import org.apache.struts2.dispatcher.mapper.ActionMapper;
@@ -44,30 +45,26 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.lang.reflect.Method;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Stack;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
  * Base class to extend for UI components.
- * <p/>
- * This class is a good extension point when building reuseable UI components.
+ * <br>
+ * This class is a good extension point when building reusable UI components.
  *
  */
 public class Component {
 
-    private static final Logger LOG = LoggerFactory.getLogger(Component.class);
+    private static final Logger LOG = LogManager.getLogger(Component.class);
 
     public static final String COMPONENT_STACK = "__component_stack";
 
     /**
      * Caches information about common tag's attributes to reduce scanning for annotation @StrutsTagAttribute
      */
-    protected static ConcurrentMap<Class<?>, Collection<String>> standardAttributesMap = new ConcurrentHashMap<Class<?>, Collection<String>>();
+    protected static ConcurrentMap<Class<?>, Collection<String>> standardAttributesMap = new ConcurrentHashMap<>();
 
     protected boolean devMode = false;
     protected ValueStack stack;
@@ -83,7 +80,7 @@ public class Component {
      */
     public Component(ValueStack stack) {
         this.stack = stack;
-        this.parameters = new LinkedHashMap<String, Object>();
+        this.parameters = new LinkedHashMap<>();
         getComponentStack().push(this);
     }
 
@@ -101,7 +98,7 @@ public class Component {
 
     @Inject(value = StrutsConstants.STRUTS_DEVMODE, required = false)
     public void setDevMode(String devMode) {
-        this.devMode = Boolean.parseBoolean(devMode);
+        this.devMode = BooleanUtils.toBoolean(devMode);
     }
 
     @Inject
@@ -111,7 +108,7 @@ public class Component {
 
     @Inject(StrutsConstants.STRUTS_EL_THROW_EXCEPTION)
     public void setThrowExceptionsOnELFailure(String throwException) {
-        this.throwExceptionOnELFailure = "true".equals(throwException);
+        this.throwExceptionOnELFailure = BooleanUtils.toBoolean(throwException);
     }
 
     @Inject
@@ -119,8 +116,8 @@ public class Component {
         this.urlHelper = urlHelper;
     }
     /**
-     * Gets the OGNL value stack assoicated with this component.
-     * @return the OGNL value stack assoicated with this component.
+     * Gets the OGNL value stack associated with this component.
+     * @return the OGNL value stack associated with this component.
      */
     public ValueStack getStack() {
         return stack;
@@ -133,7 +130,7 @@ public class Component {
     public Stack<Component> getComponentStack() {
         Stack<Component> componentStack = (Stack<Component>) stack.getContext().get(COMPONENT_STACK);
         if (componentStack == null) {
-            componentStack = new Stack<Component>();
+            componentStack = new Stack<>();
             stack.getContext().put(COMPONENT_STACK, componentStack);
         }
         return componentStack;
@@ -153,7 +150,7 @@ public class Component {
     /**
      * Callback for the end tag of this component.
      * Should the body be evaluated again?
-     * <p/>
+     * <br>
      * <b>NOTE:</b> will pop component stack.
      * @param writer  the output writer.
      * @param body    the rendered body.
@@ -166,7 +163,7 @@ public class Component {
     /**
      * Callback for the start tag of this component.
      * Should the body be evaluated again?
-     * <p/>
+     * <br>
      * <b>NOTE:</b> has a parameter to determine to pop the component stack.
      * @param writer  the output writer.
      * @param body    the rendered body.
@@ -228,15 +225,15 @@ public class Component {
 
     /**
      * Evaluates the OGNL stack to find a String value.
-     * <p/>
-     * If the given expression is <tt>null</tt/> a error is logged and a <code>RuntimeException</code> is thrown
-     * constructed with a messaged based on the given field and errorMsg paramter.
+     * <br>
+     * If the given expression is <tt>null</tt> a error is logged and a <code>RuntimeException</code> is thrown
+     * constructed with a messaged based on the given field and errorMsg parameter.
      *
      * @param expr  OGNL expression.
      * @param field   field name used when throwing <code>RuntimeException</code>.
      * @param errorMsg  error message used when throwing <code>RuntimeException</code>.
      * @return  the String value found.
-     * @throws StrutsException is thrown in case of expression is <tt>null</tt>.
+     * @throws StrutsException is thrown in case of expression is null.
      */
     protected String findString(String expr, String field, String errorMsg) {
         if (expr == null) {
@@ -248,7 +245,7 @@ public class Component {
 
     /**
      * Constructs a <code>RuntimeException</code> based on the given information.
-     * <p/>
+     * <br>
      * A message is constructed and logged at ERROR level before being returned
      * as a <code>RuntimeException</code>.
      * @param field   field name used when throwing <code>RuntimeException</code>.
@@ -292,16 +289,15 @@ public class Component {
 	}
 
     /**
-     * Is the altSyntax enabled? [TRUE]
-     * <p/>
      * See <code>struts.properties</code> where the altSyntax flag is defined.
+     * @return if the altSyntax enabled? [TRUE]
      */
     public boolean altSyntax() {
         return ComponentUtils.altSyntax(stack);
     }
 
     /**
-     * Adds the sorrounding %{ } to the expression for proper processing.
+     * Adds the surrounding %{ } to the expression for proper processing.
      * @param expr the expression.
      * @return the modified expression if altSyntax is enabled, or the parameter 
      * expression otherwise.
@@ -327,12 +323,16 @@ public class Component {
 	}
 
     /**
+     * <p>
      * Evaluates the OGNL stack to find an Object value.
-     * <p/>
+     * </p>
+     *
+     * <p>
      * Function just like <code>findValue(String)</code> except that if the
-     * given expression is <tt>null</tt/> a error is logged and
+     * given expression is <tt>null</tt> a error is logged and
      * a <code>RuntimeException</code> is thrown constructed with a
-     * messaged based on the given field and errorMsg paramter.
+     * messaged based on the given field and errorMsg parameter.
+     * </p>
      *
      * @param expr  OGNL expression.
      * @param field   field name used when throwing <code>RuntimeException</code>.
@@ -365,7 +365,7 @@ public class Component {
      * <code>expr</code> the portion wrapped with altSyntax (%{...})
      * against stack when altSyntax is on, else the whole <code>expr</code>
      * is evaluated against the stack.
-     * <p/>
+     * <br>
      * This method only supports the altSyntax. So this should be set to true.
      * @param expr  OGNL expression.
      * @param toType  the type expected to find.
@@ -373,7 +373,11 @@ public class Component {
      */
     protected Object findValue(String expr, Class toType) {
         if (altSyntax() && toType == String.class) {
-        	return TextParseUtil.translateVariables('%', expr, stack);
+            if (ComponentUtils.containsExpression(expr)) {
+                return TextParseUtil.translateVariables('%', expr, stack);
+            } else {
+                return expr;
+            }
         } else {
             expr = stripExpressionIfAltSyntax(expr);
 
@@ -393,7 +397,7 @@ public class Component {
      * @param includeContext  should the context path be included or not
      * @param encodeResult    should the url be encoded
      * @param forceAddSchemeHostAndPort    should the scheme host and port be forced
-     * @param escapeAmp    should ampersand (&) be escaped to &amp;
+     * @param escapeAmp    should ampersand (&amp;) be escaped to &amp;amp;
      * @return the action url.
      */
     protected String determineActionURL(String action, String namespace, String method,
@@ -434,7 +438,7 @@ public class Component {
     /**
      * Pushes this component's parameter Map as well as the component itself on to the stack
      * and then copies the supplied parameters over. Because the component's parameter Map is
-     * pushed before the component itself, any key-value pair that can't be assigned to componet
+     * pushed before the component itself, any key-value pair that can't be assigned to component
      * will be set in the parameters Map.
      *
      * @param params  the parameters to copy.
@@ -446,7 +450,15 @@ public class Component {
             for (Object o : params.entrySet()) {
                 Map.Entry entry = (Map.Entry) o;
                 String key = (String) entry.getKey();
-                stack.setValue(key, entry.getValue());
+
+                if (key.indexOf('-') >= 0) {
+                    // UI component attributes may contain hypens (e.g. data-ajax), but ognl
+                    // can't handle that, and there can't be a component property with a hypen
+                    // so into the parameters map it goes. See WW-4493
+                    parameters.put(key, entry.getValue());
+                } else {
+                    stack.setValue(key, entry.getValue());
+                }
             }
         } finally {
             stack.pop();
@@ -460,12 +472,11 @@ public class Component {
      * @return the exception as a string.
      */
     protected String toString(Throwable t) {
-        FastByteArrayOutputStream bout = new FastByteArrayOutputStream();
-        PrintWriter wrt = new PrintWriter(bout);
-        t.printStackTrace(wrt);
-        wrt.close();
-
-        return bout.toString();
+        try (FastByteArrayOutputStream bout = new FastByteArrayOutputStream();
+                PrintWriter wrt = new PrintWriter(bout)) {
+            t.printStackTrace(wrt);
+            return bout.toString();
+        }
     }
 
     /**
@@ -486,12 +497,12 @@ public class Component {
 
     /**
      * Adds the given key and value to this component's own parameter.
-     * <p/>
+     * <br>
      * If the provided key is <tt>null</tt> nothing happens.
      * If the provided value is <tt>null</tt> any existing parameter with
      * the given key name is removed.
      * @param key  the key of the new parameter to add.
-     * @param value the value assoicated with the key.
+     * @param value the value associated with the key.
      */
     public void addParameter(String key, Object value) {
         if (key != null) {
@@ -525,13 +536,15 @@ public class Component {
 
     /**
      * If needed caches all methods annotated by given annotation to avoid further scans
+     *
+     * @return list of attributes
      */
     protected Collection<String> getStandardAttributes() {
         Class clz = getClass();
         Collection<String> standardAttributes = standardAttributesMap.get(clz);
         if (standardAttributes == null) {
             Collection<Method> methods = AnnotationUtils.getAnnotatedMethods(clz, StrutsTagAttribute.class);
-            standardAttributes = new HashSet<String>(methods.size());
+            standardAttributes = new HashSet<>(methods.size());
             for(Method m : methods) {
                 standardAttributes.add(StringUtils.uncapitalize(m.getName().substring(3)));
             }

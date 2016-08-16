@@ -27,8 +27,7 @@ import com.opensymphony.xwork2.config.entities.PackageConfig;
 import com.opensymphony.xwork2.config.entities.ResultTypeConfig;
 import com.opensymphony.xwork2.inject.Container;
 import junit.framework.TestCase;
-import org.apache.struts2.dispatcher.ServletDispatcherResult;
-import org.easymock.EasyMock;
+import org.apache.struts2.result.ServletDispatcherResult;
 
 import javax.servlet.ServletContext;
 import java.net.URL;
@@ -37,12 +36,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import static org.easymock.EasyMock.expect;
-import static org.easymock.classextension.EasyMock.createMock;
-import static org.easymock.classextension.EasyMock.createNiceMock;
-import static org.easymock.classextension.EasyMock.createStrictMock;
-import static org.easymock.classextension.EasyMock.replay;
-import static org.easymock.classextension.EasyMock.verify;
+import static org.easymock.EasyMock.*;
 
 public class ConventionUnknownHandlerTest extends TestCase {
 
@@ -154,14 +148,14 @@ public class ConventionUnknownHandlerTest extends TestCase {
 
     private Container container() {
         final Container mock = createNiceMock(Container.class);
-        ConventionsService service = EasyMock.createNiceMock(ConventionsService.class);
+        ConventionsService service = createNiceMock(ConventionsService.class);
 
         expect(mock.getInstance(String.class, ConventionConstants.CONVENTION_CONVENTIONS_SERVICE)).andReturn("test");
         expect(mock.getInstance(ConventionsService.class, "test")).andStubReturn(service);
 
         ActionConfig actionConfig = null;
         expect(service.determineResultPath(actionConfig)).andReturn("");
-        Map<String, ResultTypeConfig> results = new HashMap<String, ResultTypeConfig>();
+        Map<String, ResultTypeConfig> results = new HashMap<>();
         results.put("jsp", new ResultTypeConfig.Builder("dispatcher", ServletDispatcherResult.class.getName()).build());
         expect(service.getResultTypesByExtension(packageConfiguration)).andReturn(results);
 

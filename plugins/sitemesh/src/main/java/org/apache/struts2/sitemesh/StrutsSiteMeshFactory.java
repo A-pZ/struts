@@ -21,15 +21,15 @@ package org.apache.struts2.sitemesh;
 import com.opensymphony.module.sitemesh.Config;
 import com.opensymphony.module.sitemesh.factory.DefaultFactory;
 import com.opensymphony.xwork2.ActionContext;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.struts2.ServletActionContext;
 import org.apache.struts2.StrutsStatics;
 
 public class StrutsSiteMeshFactory extends DefaultFactory {
 
-    private static final Logger LOG = LoggerFactory.getLogger(StrutsSiteMeshFactory.class);
+    private static final Logger LOG = LogManager.getLogger(StrutsSiteMeshFactory.class);
 
     public StrutsSiteMeshFactory(Config config) {
         super(config);
@@ -45,9 +45,7 @@ public class StrutsSiteMeshFactory extends DefaultFactory {
 
     private boolean isInsideActionTag() {
         if(ActionContext.getContext() == null) {
-            if (LOG.isTraceEnabled()) {
-                LOG.trace("ActionContext is null! Not a user request?");
-            }
+            LOG.trace("ActionContext is null! Not a user request?");
             return false;
         }
         Object attribute = ServletActionContext.getRequest().getAttribute(StrutsStatics.STRUTS_ACTION_TAG_INVOCATION);

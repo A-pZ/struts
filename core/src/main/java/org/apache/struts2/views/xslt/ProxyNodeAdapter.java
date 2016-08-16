@@ -21,12 +21,11 @@
 
 package org.apache.struts2.views.xslt;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
-
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
 
 /**
  * ProxyNodeAdapter is a read-only delegating adapter for objects which already
@@ -36,27 +35,26 @@ import com.opensymphony.xwork2.util.logging.LoggerFactory;
  */
 public abstract class ProxyNodeAdapter extends AbstractAdapterNode {
 
-    private Logger log = LoggerFactory.getLogger(this.getClass());
+    private Logger log = LogManager.getLogger(this.getClass());
 
     public ProxyNodeAdapter(AdapterFactory factory, AdapterNode parent, Node value) {
         setContext(factory, parent, "document"/*propname unused*/, value);
-        log.debug("proxied node is: " + value);
-        log.debug("node class is: " + value.getClass());
-        log.debug("node type is: " + value.getNodeType());
-        log.debug("node name is: " + value.getNodeName());
+        log.debug("Proxied node is: {}" + value);
+        log.debug("Node class is: {}", value.getClass());
+        log.debug("Node type is: {}", value.getNodeType());
+        log.debug("Node name is: {}", value.getNodeName());
     }
 
     /**
-     * Get the proxied Node value
+     * @return the proxied Node value
      */
     protected Node node() {
         return (Node) getPropertyValue();
     }
 
     /**
-     * Get and adapter to wrap the proxied node.
-     *
-     * @param node
+     * @param node the node
+     * @return adapter to wrap the proxied node.
      */
     protected Node wrap(Node node) {
         return getAdapterFactory().proxyNode(this, node);
@@ -84,15 +82,17 @@ public abstract class ProxyNodeAdapter extends AbstractAdapterNode {
     }
 
     public short getNodeType() {
-        if (log.isTraceEnabled())
+        if (log.isTraceEnabled()) {
             log.trace("getNodeType: " + getNodeName() + ": " + node().getNodeType());
+        }
         return node().getNodeType();
     }
 
     public NamedNodeMap getAttributes() {
         NamedNodeMap nnm = wrap(node().getAttributes());
-        if (log.isTraceEnabled())
+        if (log.isTraceEnabled()) {
             log.trace("getAttributes: " + nnm);
+        }
         return nnm;
     }
 

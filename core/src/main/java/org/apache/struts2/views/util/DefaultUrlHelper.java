@@ -22,30 +22,26 @@
 package org.apache.struts2.views.util;
 
 import com.opensymphony.xwork2.inject.Inject;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.struts2.StrutsConstants;
+import org.apache.struts2.util.URLDecoderUtil;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Default implementation of UrlHelper
  */
 public class DefaultUrlHelper implements UrlHelper {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DefaultUrlHelper.class);
+    private static final Logger LOG = LogManager.getLogger(DefaultUrlHelper.class);
 
     public static final String HTTP_PROTOCOL = "http";
     public static final String HTTPS_PROTOCOL = "https";
@@ -85,11 +81,16 @@ public class DefaultUrlHelper implements UrlHelper {
     	return buildUrl(action, request, response, params, scheme, includeContext, encodeResult, forceAddSchemeHostAndPort, true);
     }
 
-    public String buildUrl(String action, HttpServletRequest request, HttpServletResponse response, Map<String, Object> params, String scheme,
+    public String buildUrl(String action, HttpServletRequest request, HttpServletResponse response, Map<String, Object> params, String urlScheme,
                            boolean includeContext, boolean encodeResult, boolean forceAddSchemeHostAndPort, boolean escapeAmp) {
 
         StringBuilder link = new StringBuilder();
         boolean changedScheme = false;
+
+        String scheme = null;
+        if (isValidScheme(urlScheme)) {
+            scheme = urlScheme;
+        }
 
         // only append scheme if it is different to the current scheme *OR*
         // if we explicity want it to be appended by having forceAddSchemeHostAndPort = true
@@ -187,9 +188,7 @@ public class DefaultUrlHelper implements UrlHelper {
         try {
             result = encodeResult ? response.encodeURL(result) : result;
         } catch (Exception ex) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Could not encode the URL for some reason, use it unchanged", ex);
-            }
+            LOG.debug("Could not encode the URL for some reason, use it unchanged", ex);
             result = link.toString();
         }
 
@@ -241,6 +240,10 @@ public class DefaultUrlHelper implements UrlHelper {
         }
     }
 
+    protected boolean isValidScheme(String scheme) {
+        return HTTP_PROTOCOL.equals(scheme) || HTTPS_PROTOCOL.equals(scheme);
+    }
+
     private String buildParameterSubstring(String name, String value) {
         StringBuilder builder = new StringBuilder();
         builder.append(encode(name));
@@ -259,26 +262,22 @@ public class DefaultUrlHelper implements UrlHelper {
 		try {
 			return URLEncoder.encode(input, encoding);
 		} catch (UnsupportedEncodingException e) {
-			if (LOG.isWarnEnabled()) {
-				LOG.warn("Could not encode URL parameter '#0', returning value un-encoded", input);
-			}
+    		LOG.warn("Could not encode URL parameter '{}', returning value un-encoded", input);
 			return input;
 		}
 	}
 
 	/**
-	 * Decodes the URL using {@link java.net.URLDecoder#decode(String, String)} with the encoding specified in the configuration.
+	 * Decodes the URL using {@link URLDecoderUtil#decode(String, String)} with the encoding specified in the configuration.
 	 *
 	 * @param input the input to decode
 	 * @return the encoded string
 	 */
 	public String decode( String input ) {
 		try {
-			return URLDecoder.decode(input, encoding);
-		} catch (UnsupportedEncodingException e) {
-			if (LOG.isWarnEnabled()) {
-				LOG.warn("Could not decode URL parameter '#0', returning value un-decoded", input);
-			}
+            return URLDecoderUtil.decode(input, encoding);
+		} catch (Exception e) {
+    		LOG.warn("Could not decode URL parameter '{}', returning value un-decoded", input);
 			return input;
 		}
 	}

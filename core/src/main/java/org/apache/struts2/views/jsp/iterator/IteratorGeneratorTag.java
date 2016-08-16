@@ -21,16 +21,15 @@
 
 package org.apache.struts2.views.jsp.iterator;
 
-import javax.servlet.jsp.JspException;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.struts2.util.IteratorGenerator;
 import org.apache.struts2.util.IteratorGenerator.Converter;
 import org.apache.struts2.views.annotations.StrutsTag;
 import org.apache.struts2.views.annotations.StrutsTagAttribute;
 import org.apache.struts2.views.jsp.StrutsBodyTagSupport;
 
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
+import javax.servlet.jsp.JspException;
 
 
 /**
@@ -85,7 +84,7 @@ import com.opensymphony.xwork2.util.logging.LoggerFactory;
  * &lt;%
  *  Iterator i = (Iterator) pageContext.getAttribute("myAtt");
  *  while(i.hasNext()) {
- *      String s = (String) i.next(); %>
+ *      String s = (String) i.next(); %&gt;
  *      &lt;%=s%&gt; &lt;br/&gt;
  * &lt;%    }
  * %&gt;
@@ -134,7 +133,7 @@ public class IteratorGeneratorTag extends StrutsBodyTagSupport {
 
     public static final String DEFAULT_SEPARATOR = ",";
 
-    private static final Logger LOG = LoggerFactory.getLogger(IteratorGeneratorTag.class);
+    private static final Logger LOG = LogManager.getLogger(IteratorGeneratorTag.class);
 
     String countAttr;
     String separatorAttr;
@@ -149,8 +148,10 @@ public class IteratorGeneratorTag extends StrutsBodyTagSupport {
     }
 
     /**
-     * @s.tagattribute required="true" type="String"
+     * {@literal @}s.tagattribute required="true" type="String"
      * description="the separator to be used in separating the <i>val</i> into entries of the iterator"
+     *
+     * @param separator the seperator
      */
     @StrutsTagAttribute(required=true, description="The separator to be used in separating the <i>val</i> into entries of the iterator")
     public void setSeparator(String separator) {
@@ -158,8 +159,10 @@ public class IteratorGeneratorTag extends StrutsBodyTagSupport {
     }
 
     /**
-     * @s.tagattribute required="true"
+     * {@literal @}s.tagattribute required="true"
      * description="the source to be parsed into an iterator"
+     *
+     * @param val the value
      */
     @StrutsTagAttribute(required=true, description="The source to be parsed into an iterator")
     public void setVal(String val) {
@@ -170,11 +173,6 @@ public class IteratorGeneratorTag extends StrutsBodyTagSupport {
             description="The converter to convert the String entry parsed from <i>val</i> into an object")
     public void setConverter(String aConverter) {
         converterAttr = aConverter;
-    }
-
-    @StrutsTagAttribute(description="Deprecated. Use 'var' instead")
-    public void setId(String string) {
-        setVar(string);
     }
 
     @StrutsTagAttribute(description="The name to store the resultant iterator into page context, if such name is supplied")
@@ -206,9 +204,7 @@ public class IteratorGeneratorTag extends StrutsBodyTagSupport {
                     count = Integer.parseInt((String)countObj);
                 }
                 catch(NumberFormatException e) {
-                    if (LOG.isWarnEnabled()) {
-                	LOG.warn("unable to convert count attribute ["+countObj+"] to number, ignore count attribute", e);
-                    }
+                    LOG.warn("Unable to convert count attribute [{}] to number, ignore count attribute", countObj, e);
                 }
             }
         }

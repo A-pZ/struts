@@ -24,8 +24,8 @@ package org.apache.struts2.components;
 import com.opensymphony.xwork2.ObjectFactory;
 import com.opensymphony.xwork2.inject.Inject;
 import com.opensymphony.xwork2.util.ValueStack;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import com.opensymphony.xwork2.util.reflection.ReflectionProvider;
 import org.apache.struts2.views.annotations.StrutsTag;
 import org.apache.struts2.views.annotations.StrutsTagAttribute;
@@ -36,10 +36,10 @@ import java.io.Writer;
  * <!-- START SNIPPET: javadoc -->
  * <p>Instantiates a class that conforms to the JavaBeans specification. This tag has a body which can contain
  * a number of {@link Param} elements to set any mutator methods on that class.</p>
- * <p/>
+ *
  * <p>If the var attribute is set on the BeanTag, it will place the instantiated bean into the
  * stack's Context.</p>
- * <p/>
+ *
  * <!-- END SNIPPET: javadoc -->
  *
  *
@@ -52,13 +52,13 @@ import java.io.Writer;
  *
  *
  * <p>Examples:</p>
- * <p/>
+ *
  * <pre>
  * <!-- START SNIPPET: examples -->
  * &lt;-- in freemarker form --&gt;
  * [@s.bean name="org.apache.struts2.example.counter.SimpleCounter" var="counter"]
  *   [s:param name="foo" value="BAR"/]
- *   The value of foo is : [s:property value="foo"/], when inside the bean tag.<br />
+ *   The value of foo is : [s:property value="foo"/], when inside the bean tag.
  * [/s:bean]
  *
  * &lt;-- in jsp form --&gt;
@@ -68,16 +68,16 @@ import java.io.Writer;
  * &lt;/s:bean&gt;
  * <!-- END SNIPPET: examples -->
  * </pre>
- * <p/>
+ *
  *
  * <!-- START SNIPPET: examplesdescription -->
  * <p>This example instantiates a bean called SimpleCounter and sets the foo property (setFoo('BAR')). The
  * SimpleCounter object is then pushed onto the Valuestack, which means that we can call its accessor methods (getFoo())
  * with the Property tag and get their values.</p>
- * <p/>
+ *
  * <p>In the above example, the id has been set to a value of <i>counter</i>. This means that the SimpleCounter class
  * will be placed into the stack's context. You can access the SimpleCounter class using a Struts tag:</p>
- * <p/>
+ *
  * <pre>
  * &lt;-- jsp form --&gt;
  * &lt;s:property value="#counter" /&gt;
@@ -85,7 +85,7 @@ import java.io.Writer;
  * &lt;-- freemarker form --&gt;
  * [s:property value="#counter.foo"/]
  * </pre>
- * <p/>
+ *
  * <p>In the property tag example, the <i>#</i> tells Ognl to search the context for the SimpleCounter class which has
  * an id(key) of <i>counter</i></p>
  * <!-- END SNIPPET: examplesdescription -->
@@ -95,7 +95,7 @@ import java.io.Writer;
 @StrutsTag(name = "bean", tldTagClass = "org.apache.struts2.views.jsp.BeanTag",
         description = "Instantiate a JavaBean and place it in the context")
 public class Bean extends ContextBean {
-    protected static final Logger LOG = LoggerFactory.getLogger(Bean.class);
+    protected static final Logger LOG = LogManager.getLogger(Bean.class);
 
     protected Object bean;
     protected String name;

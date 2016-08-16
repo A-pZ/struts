@@ -29,17 +29,13 @@ import com.opensymphony.xwork2.config.entities.InterceptorMapping;
 import com.opensymphony.xwork2.inject.Inject;
 import com.opensymphony.xwork2.interceptor.MethodFilterInterceptorUtil;
 import com.opensymphony.xwork2.util.ValueStack;
-import com.opensymphony.xwork2.validator.ActionValidatorManager;
-import com.opensymphony.xwork2.validator.FieldValidator;
-import com.opensymphony.xwork2.validator.ValidationException;
-import com.opensymphony.xwork2.validator.ValidationInterceptor;
-import com.opensymphony.xwork2.validator.Validator;
-import com.opensymphony.xwork2.validator.ValidatorContext;
+import com.opensymphony.xwork2.validator.*;
 import com.opensymphony.xwork2.validator.validators.VisitorFieldValidator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.struts2.dispatcher.mapper.ActionMapping;
 import org.apache.struts2.views.annotations.StrutsTag;
 import org.apache.struts2.views.annotations.StrutsTagAttribute;
+import org.apache.struts2.views.jsp.TagUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -51,14 +47,19 @@ import java.util.Set;
 
 /**
  * <!-- START SNIPPET: javadoc -->
- * <p/>
- * Renders HTML an input form.<p/>
- * <p/>
+ * <p>
+ * Renders HTML an input form.
+ * </p>
+ *
+ * <p>
  * The remote form allows the form to be submitted without the page being refreshed. The results from the form
- * can be inserted into any HTML element on the page.<p/>
- * <p/>
- * NOTE:<p/>
- * The order / logic in determining the posting url of the generated HTML form is as follows:-
+ * can be inserted into any HTML element on the page.
+ * </p>
+ * <p>
+ * NOTE:<br>
+ * The order / logic in determining the posting url of the generated HTML form is as follows:
+ * </p>
+ *
  * <ol>
  * <li>
  * If the action attribute is not specified, then the current request will be used to
@@ -66,7 +67,7 @@ import java.util.Set;
  * </li>
  * <li>
  * If the action is given, Struts will try to obtain an ActionConfig. This will be
- * successfull if the action attribute is a valid action alias defined struts.xml.
+ * successful if the action attribute is a valid action alias defined struts.xml.
  * </li>
  * <li>
  * If the action is given and is not an action alias defined in struts.xml, Struts
@@ -74,16 +75,16 @@ import java.util.Set;
  * from it and using UrlHelper to generate the final url.
  * </li>
  * </ol>
- * <p/>
+ *
  * <!-- END SNIPPET: javadoc -->
- * <p/>
- * <p/> <b>Examples</b>
- * <p/>
+ *
+ * <p><b>Examples</b></p>
+ *
  * <pre>
  * <!-- START SNIPPET: example -->
- * <p/>
+ *
  * &lt;s:form ... /&gt;
- * <p/>
+ *
  * <!-- END SNIPPET: example -->
  * </pre>
  *
@@ -277,16 +278,38 @@ public class Form extends ClosingUIBean {
         ActionMapping mapping = actionMapper.getMappingFromActionName(formActionValue);
         String actionName = mapping.getName();
 
-        List<Validator> actionValidators = actionValidatorManager.getValidators(actionClass, actionName);
-        List<Validator> validators = new ArrayList<Validator>();
+        String methodName = null;
+        if (isValidateAnnotatedMethodOnly(actionName)) {
+            methodName = mapping.getMethod();
+        }
+        
+        List<Validator> actionValidators = actionValidatorManager.getValidators(actionClass, actionName, methodName);
+        List<Validator> validators = new ArrayList<>();
 
         findFieldValidators(name, actionClass, actionName, actionValidators, validators, "");
 
         return validators;
     }
 
+    private boolean isValidateAnnotatedMethodOnly(String actionName) {
+        RuntimeConfiguration runtimeConfiguration = configuration.getRuntimeConfiguration();
+        String actionNamespace = TagUtils.buildNamespace(actionMapper, stack, request);
+        ActionConfig actionConfig = runtimeConfiguration.getActionConfig(actionNamespace, actionName);
+
+        if (actionConfig != null) {
+            List<InterceptorMapping> interceptors = actionConfig.getInterceptors();
+            for (InterceptorMapping interceptorMapping : interceptors) {
+                if (ValidationInterceptor.class.isInstance(interceptorMapping.getInterceptor())) {
+                    ValidationInterceptor validationInterceptor = (ValidationInterceptor) interceptorMapping.getInterceptor();
+                    return validationInterceptor.isValidateAnnotatedMethodOnly();
+                }
+            }
+        }
+        return false;
+    }
+
     private void findFieldValidators(String name, Class actionClass, String actionName,
-            List<Validator> validatorList, List<Validator> retultValidators, String prefix) {
+                                     List<Validator> validatorList, List<Validator> resultValidators, String prefix) {
 
         for (Validator validator : validatorList) {
             if (validator instanceof FieldValidator) {
@@ -301,14 +324,14 @@ public class Form extends ClosingUIBean {
 
                     List<Validator> visitorValidators = actionValidatorManager.getValidators(clazz, actionName);
                     String vPrefix = prefix + (vfValidator.isAppendPrefix() ? vfValidator.getFieldName() + "." : "");
-                    findFieldValidators(name, clazz, actionName, visitorValidators, retultValidators, vPrefix);
+                    findFieldValidators(name, clazz, actionName, visitorValidators, resultValidators, vPrefix);
                 } else if ((prefix + fieldValidator.getFieldName()).equals(name)) {
                     if (StringUtils.isNotBlank(prefix)) {
                         //fixing field name for js side
                         FieldVisitorValidatorWrapper wrap = new FieldVisitorValidatorWrapper(fieldValidator, prefix);
-                        retultValidators.add(wrap);
+                        resultValidators.add(wrap);
                     } else {
-                        retultValidators.add(fieldValidator);
+                        resultValidators.add(fieldValidator);
                     }
                 }
             }
@@ -391,9 +414,10 @@ public class Form extends ClosingUIBean {
 
     /**
      * Return type of visited object.
-     * @param actionClass
-     * @param visitorFieldName
-     * @return
+     *
+     * @param actionClass action class
+     * @param visitorFieldName field name
+     * @return type of visited object
      */
     @SuppressWarnings("unchecked")
     protected Class getVisitorReturnType(Class actionClass, String visitorFieldName) {

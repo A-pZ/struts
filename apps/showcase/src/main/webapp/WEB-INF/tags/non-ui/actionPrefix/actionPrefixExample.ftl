@@ -8,8 +8,8 @@
 </div>
 
 <div class="container-fluid">
-	<div class="row-fluid">
-		<div class="span12">
+	<div class="row">
+		<div class="col-md-12">
 
 			<b>Action Prefix</b><br/>
 			By clicking on 'action prefix' button, the request will go to the action alias 'actionPrefix'
@@ -29,7 +29,7 @@
 			redirect (a new request is issue from the client), the text entered will be lost.<p/>
 
 
-			<@s.url id="url" action="viewSource" namespace="/tags/non-ui/actionPrefix" />
+			<@s.url var="url" action="viewSource" namespace="/tags/non-ui/actionPrefix" />
 			The JSP code can be read <@s.a href="%{#url}">here</@s.a>.
 
 

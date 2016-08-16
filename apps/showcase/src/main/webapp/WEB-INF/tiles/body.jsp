@@ -1,7 +1,7 @@
 <%@taglib prefix="s" uri="/struts-tags" %>
 <div class="container-fluid">
-	<div class="row-fluid">
-		<div class="span12">
+	<div class="row">
+		<div class="col-md-12">
 			<div>
 				<p>This example illustrates the Struts/Tiles Plugin.</p>
 
@@ -15,6 +15,9 @@
 					</li>
 					<li>
 						<a href="freemarkerLayout.action">View Example with a FreeMarker Layout</a>
+					</li>
+					<li>
+						<a href="tiles-annotations.action">View Example with tiles configuration by annotating action</a>
 					</li>
 				</ul>
 

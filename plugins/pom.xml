@@ -26,7 +26,7 @@
     <parent>
         <groupId>org.apache.struts</groupId>
         <artifactId>struts2-parent</artifactId>
-        <version>2.3.23</version>
+        <version>2.5-SNAPSHOT</version>
     </parent>
 
     <artifactId>struts2-plugins</artifactId>
@@ -34,11 +34,10 @@
     <name>Struts Plugins</name>
 
     <modules>
+        <module>bean-validation</module>
         <module>cdi</module>
-        <module>codebehind</module>
         <module>config-browser</module>
         <module>convention</module>
-        <module>dojo</module>
         <module>dwr</module>
         <module>embeddedjsp</module>
         <module>gxp</module>
@@ -46,7 +45,6 @@
         <module>java8-support</module>
         <module>javatemplates</module>
         <module>jfreechart</module>
-        <module>jsf</module>
         <module>json</module>
         <module>junit</module>
         <module>osgi</module>
@@ -59,10 +57,8 @@
         <module>sitegraph</module>
         <module>sitemesh</module>
         <module>spring</module>
-        <module>struts1</module>
         <module>testng</module>
         <module>tiles</module>
-        <module>tiles3</module>
     </modules>
 
     <dependencies>

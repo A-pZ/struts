@@ -21,55 +21,58 @@
 
 package org.apache.struts2.interceptor;
 
+import com.opensymphony.xwork2.ActionContext;
+import com.opensymphony.xwork2.ActionInvocation;
+import com.opensymphony.xwork2.interceptor.ValidationAware;
+import com.opensymphony.xwork2.interceptor.AbstractInterceptor;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import org.apache.struts2.result.ServletRedirectResult;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.apache.struts2.dispatcher.ServletRedirectResult;
-
-import com.opensymphony.xwork2.ActionContext;
-import com.opensymphony.xwork2.ActionInvocation;
-import com.opensymphony.xwork2.ValidationAware;
-import com.opensymphony.xwork2.interceptor.AbstractInterceptor;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
-
 /**
  * <!-- START SNIPPET: description -->
- *
+ * <p>
  * An interceptor to store a {@link ValidationAware} action's messages / errors and field errors into
  * HTTP Session, such that it will be retrievable at a later stage. This allows the action's message /
  * errors and field errors to be available longer that just the particular HTTP request.
+ * </p>
  *
+ * <p>
  * If no session exists, nothing will be stored and can be retrieved later. In other terms,
  * the application is responsible to open the session.
+ * </p>
  *
- * <p/>
- *
+ * <p>
  * In the 'STORE' mode, the interceptor will store the {@link ValidationAware} action's message / errors
  * and field errors into HTTP session.
+ * </p>
  *
- * <p/>
- *
+ * <p>
  * In the 'RETRIEVE' mode, the interceptor will retrieve the stored action's message / errors  and field
  * errors and put them back into the {@link ValidationAware} action.
- * 
- * <p/>
+ * </p>
  *
- * In the 'AUTOMATIC' mode, the interceptor will always retrieve the stored action's message / errors 
+ * <p>
+ * In the 'AUTOMATIC' mode, the interceptor will always retrieve the stored action's message / errors
  * and field errors and put them back into the {@link ValidationAware} action, and after Action execution, 
  * if the {@link com.opensymphony.xwork2.Result} is an instance of {@link ServletRedirectResult}, the action's message / errors
  * and field errors into automatically be stored in the HTTP session..
+ * </p>
  *
- * <p/>
- *
+ * <p>
  * The interceptor does nothing in the 'NONE' mode, which is the default.
+ * </p>
  *
- * <p/>
- *
- * The operation mode could be switched using :- <p/>
- * 1] Setting the iterceptor parameter eg.
+ * <p>
+ * The operation mode could be switched using:<br>
+ * 1] Setting the interceptor parameter eg.
+ * </p>
  * <pre>
  *   &lt;action name="submitApplication" ...&gt;
  *      &lt;interceptor-ref name="store"&gt;
@@ -80,7 +83,10 @@ import com.opensymphony.xwork2.util.logging.LoggerFactory;
  *   &lt;/action&gt;
  * </pre>
  *
+ * <p>
  * 2] Through request parameter (allowRequestParameterSwitch must be 'true' which is the default)
+ * </p>
+ *
  * <pre>
  *   // the request will have the operation mode in 'STORE'
  *   http://localhost:8080/context/submitApplication.action?operationMode=STORE
@@ -102,11 +108,12 @@ import com.opensymphony.xwork2.util.logging.LoggerFactory;
  *
  * <!-- END SNIPPET: parameters -->
  *
- * <p/>
  *
  * <!-- START SNIPPET: extending -->
+ * <p>
+ * The following method could be overridden:
+ * </p>
  *
- * The following method could be overriden :-
  * <ul>
  *  <li>getRequestOperationMode - get the operation mode of this interceptor based on the request parameters</li>
  *  <li>mergeCollection - merge two collections</li>
@@ -120,10 +127,10 @@ import com.opensymphony.xwork2.util.logging.LoggerFactory;
  *
  * &lt;action name="submitApplication" ....&gt;
  *    &lt;interceptor-ref name="store"&gt;
- *      &lt;param name="operationMode">STORE&lt;/param&gt;
+ *      &lt;param name="operationMode"&gt;aSTORE&lt;/param&gt;
  *    &lt;/interceptor-ref&gt;
  *    &lt;interceptor-ref name="defaultStack" /&gt;
- *    &lt;result name="input" type="redirect">applicationFailed.action&lt;/result&gt;
+ *    &lt;result name="input" type="redirect"&gt;aapplicationFailed.action&lt;/result&gt;
  *    &lt;result type="dispatcher"&gt;applicationSuccess.jsp&lt;/result&gt;
  * &lt;/action&gt;
  *
@@ -138,21 +145,19 @@ import com.opensymphony.xwork2.util.logging.LoggerFactory;
  * </pre>
  *
  * <!-- START SNIPPET: exampleDescription -->
- *
+ * <p>
  * With the example above, 'submitApplication.action' will have the action messages / errors / field errors stored
  * in the HTTP Session. Later when needed, (in this case, when 'applicationFailed.action' is fired, it
  * will get the action messages / errors / field errors stored in the HTTP Session and put them back into
  * the action.
- *
+ * </p>
  * <!-- END SNIPPET: exampleDescription -->
- *
- * @version $Date$ $Id$
  */
 public class MessageStoreInterceptor extends AbstractInterceptor {
 
     private static final long serialVersionUID = 9161650888603380164L;
 
-    private static final Logger LOG = LoggerFactory.getLogger(MessageStoreInterceptor.class);
+    private static final Logger LOG = LogManager.getLogger(MessageStoreInterceptor.class);
 
     public static final String AUTOMATIC_MODE = "AUTOMATIC";
     public static final String STORE_MODE = "STORE";
@@ -170,6 +175,7 @@ public class MessageStoreInterceptor extends AbstractInterceptor {
     public void setAllowRequestParameterSwitch(boolean allowRequestParameterSwitch) {
         this.allowRequestParameterSwitch = allowRequestParameterSwitch;
     }
+
     public boolean getAllowRequestParameterSwitch() {
         return this.allowRequestParameterSwitch;
     }
@@ -177,6 +183,7 @@ public class MessageStoreInterceptor extends AbstractInterceptor {
     public void setRequestParameterSwitch(String requestParameterSwitch) {
         this.requestParameterSwitch = requestParameterSwitch;
     }
+
     public String getRequestParameterSwitch() {
         return this.requestParameterSwitch;
     }
@@ -184,23 +191,23 @@ public class MessageStoreInterceptor extends AbstractInterceptor {
     public void setOperationMode(String operationMode) {
         this.operationMode = operationMode;
     }
+
     public String getOperationModel() {
         return this.operationMode;
     }
 
     public String intercept(ActionInvocation invocation) throws Exception {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("entering MessageStoreInterceptor ...");
-        }
+        LOG.trace("entering MessageStoreInterceptor ...");
 
         before(invocation);
-        String result = invocation.invoke();
-        after(invocation, result);
 
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("exit executing MessageStoreInterceptor");
-        }
-        
+        LOG.trace("Registering listener to store messages before result will be executed");
+        invocation.addPreResultListener(new MessageStorePreResultListener(this));
+
+        String result = invocation.invoke();
+
+        LOG.debug("exit executing MessageStoreInterceptor");
+
         return result;
     }
 
@@ -208,8 +215,8 @@ public class MessageStoreInterceptor extends AbstractInterceptor {
      * Handle the retrieving of field errors / action messages / field errors, which is
      * done before action invocation, and the <code>operationMode</code> is 'RETRIEVE'.
      *
-     * @param invocation
-     * @throws Exception
+     * @param invocation the action invocation
+     * @throws Exception in case of any error
      */
     protected void before(ActionInvocation invocation) throws Exception {
         String reqOperationMode = getRequestOperationMode(invocation);
@@ -224,17 +231,13 @@ public class MessageStoreInterceptor extends AbstractInterceptor {
                 Map session = (Map) invocation.getInvocationContext().get(ActionContext.SESSION);
 
                 if (session == null) {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Session is not open, no errors / messages could be retrieve for action ["+action+"]");
-                    }
+                    LOG.debug("Session is not open, no errors / messages could be retrieve for action [{}]", action);
                     return;
                 }
 
                 ValidationAware validationAwareAction = (ValidationAware) action;
 
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("retrieve error / message from session to populate into action ["+action+"]");
-                }
+                LOG.debug("Retrieve error / message from session to populate into action [{}]", action);
 
                 Collection actionErrors = (Collection) session.get(actionErrorsSessionKey);
                 Collection actionMessages = (Collection) session.get(actionMessagesSessionKey);
@@ -262,55 +265,12 @@ public class MessageStoreInterceptor extends AbstractInterceptor {
     }
 
     /**
-     * Handle the storing of field errors / action messages / field errors, which is
-     * done after action invocation, and the <code>operationMode</code> is in 'STORE'.
-     *
-     * @param invocation
-     * @param result
-     * @throws Exception
-     */
-    protected void after(ActionInvocation invocation, String result) throws Exception {
-
-        String reqOperationMode = getRequestOperationMode(invocation);
-        boolean isRedirect = invocation.getResult() instanceof ServletRedirectResult;
-        if (STORE_MODE.equalsIgnoreCase(reqOperationMode) ||
-                STORE_MODE.equalsIgnoreCase(operationMode) ||
-                (AUTOMATIC_MODE.equalsIgnoreCase(operationMode) && isRedirect)) {
-
-            Object action = invocation.getAction();
-            if (action instanceof ValidationAware) {
-                // store error / messages into session
-                Map session = (Map) invocation.getInvocationContext().get(ActionContext.SESSION);
-
-                if (session == null) {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Could not store action ["+action+"] error/messages into session, because session hasn't been opened yet.");
-                    }
-                    return;
-                }
-
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("store action ["+action+"] error/messages into session ");
-                }
-
-                ValidationAware validationAwareAction = (ValidationAware) action;
-                session.put(actionErrorsSessionKey, validationAwareAction.getActionErrors());
-                session.put(actionMessagesSessionKey, validationAwareAction.getActionMessages());
-                session.put(fieldErrorsSessionKey, validationAwareAction.getFieldErrors());
-            }
-            else if(LOG.isDebugEnabled()) {
-        	LOG.debug("Action ["+action+"] is not ValidationAware, no message / error that are storeable");
-            }
-        }
-    }
-
-
-    /**
-     * Get the operationMode through request paramter, if <code>allowRequestParameterSwitch</code>
+     * Get the operationMode through request parameter, if <code>allowRequestParameterSwitch</code>
      * is 'true', else it simply returns 'NONE', meaning its neither in the 'STORE_MODE' nor
      * 'RETRIEVE_MODE'.
      *
-     * @return String
+     * @param invocation the action invocation
+     * @return the request operation mode
      */
     protected String getRequestOperationMode(ActionInvocation invocation) {
         String reqOperationMode = NONE;
@@ -331,9 +291,9 @@ public class MessageStoreInterceptor extends AbstractInterceptor {
      * Merge <code>col1</code> and <code>col2</code> and return the composite
      * <code>Collection</code>.
      *
-     * @param col1
-     * @param col2
-     * @return Collection
+     * @param col1 first collection
+     * @param col2 second collection
+     * @return the merged collection
      */
     protected Collection mergeCollection(Collection col1, Collection col2) {
         Collection _col1 = (col1 == null ? new ArrayList() : col1);
@@ -346,9 +306,9 @@ public class MessageStoreInterceptor extends AbstractInterceptor {
      * Merge <code>map1</code> and <code>map2</code> and return the composite
      * <code>Map</code>
      *
-     * @param map1
-     * @param map2
-     * @return Map
+     * @param map1 first map
+     * @param map2 second map
+     * @return the merged map
      */
     protected Map mergeMap(Map map1, Map map2) {
         Map _map1 = (map1 == null ? new LinkedHashMap() : map1);

@@ -78,7 +78,6 @@ public class SubmitTest extends AbstractUITagTest {
         SubmitTag tag = new SubmitTag();
         tag.setPageContext(pageContext);
         tag.setLabel("mylabel");
-        tag.setAlign("left");
         tag.setName("myname");
         tag.setValue("%{foo}");
         tag.setDisabled("true");
@@ -116,7 +115,6 @@ public class SubmitTest extends AbstractUITagTest {
         tag.setPageContext(pageContext);
         tag.setLabel("mylabel");
         tag.setType("button");
-        tag.setAlign("left");
         tag.setName("myname");
         tag.setValue("%{foo}");
 
@@ -173,7 +171,6 @@ public class SubmitTest extends AbstractUITagTest {
         tag.setLabel("mylabel");
         tag.setAction("manager");
         tag.setMethod("update");
-        tag.setAlign("left");
 
         tag.doStartTag();
         tag.doEndTag();
@@ -193,7 +190,6 @@ public class SubmitTest extends AbstractUITagTest {
         tag.setLabel("mylabel");
         tag.setAction("manager");
         tag.setMethod(null); // no method
-        tag.setAlign("left");
 
         tag.doStartTag();
         tag.doEndTag();
@@ -213,7 +209,6 @@ public class SubmitTest extends AbstractUITagTest {
         tag.setLabel("mylabel");
         tag.setAction(null); // no action
         tag.setMethod("update");
-        tag.setAlign("left");
 
         tag.doStartTag();
         tag.doEndTag();
@@ -243,7 +238,7 @@ public class SubmitTest extends AbstractUITagTest {
     /**
      * Initialize a map of {@link org.apache.struts2.views.jsp.AbstractUITagTest.PropertyHolder} for generic tag
      * property testing. Will be used when calling {@link #verifyGenericProperties(org.apache.struts2.views.jsp.ui.AbstractUITag,
-     * String, String[])} as properties to verify.<p/> This implementation extends testdata from AbstractUITag.
+     * String, String[])} as properties to verify.<br> This implementation extends testdata from AbstractUITag.
      *
      * @return A Map of PropertyHolders values bound to {@link org.apache.struts2.views.jsp.AbstractUITagTest.PropertyHolder#getName()}
      *         as key.

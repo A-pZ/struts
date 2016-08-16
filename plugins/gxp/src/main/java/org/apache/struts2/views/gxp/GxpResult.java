@@ -29,35 +29,37 @@ import com.opensymphony.xwork2.inject.Inject;
 import java.io.IOException;
 
 /**
+ * <p>
  * Struts 2 GXP result type implementation. Outputs GXP. Pulls GXP parameters
  * from Struts 2's value stack.
- * <p/>
+ * </p>
+ *
  * <p>Declare the GXP result type for your package in the xwork.xml file:</p>
- * <p/>
+ *
  * <pre>
- *     &lt;result-types>
- *       &lt;result-type name="gxp" class="org.apache.struts2.views.gxp.GxpResult"/>
- *     &lt;/result-types>
+ *     &lt;result-types&gt;
+ *       &lt;result-type name="gxp" class="org.apache.struts2.views.gxp.GxpResult"/&gt;
+ *     &lt;/result-types&gt;
  * </pre>
- * <p/>
+ *
  * <p>Or if you want to output XML instead of HTML:</p>
- * <p/>
+ *
  * <pre>
- *     &lt;result-types>
- *       &lt;result-type name="gxp" class="org.apache.struts2.views.gxp.GxpResult">
- *         &lt;param name="outputXml">true&lt;/param>
- *       &lt;/result-type>
- *     &lt;/result-types>
+ *     &lt;result-types&gt;
+ *       &lt;result-type name="gxp" class="org.apache.struts2.views.gxp.GxpResult"&gt;
+ *         &lt;param name="outputXml"&gt;true&lt;/param&gt;
+ *       &lt;/result-type&gt;
+ *     &lt;/result-types&gt;
  * </pre>
- * <p/>
+ *
  * <p>Outputting XML changes the content type from text/html to application/xml
  * and configures the {@link GxpContext} to output XML. This is useful in
  * situations like specifying the doctype of your GXP to be 'mobile'.</p>
- * <p/>
+ *
  * <p>Use the GXP result type for the result of an action. For example:</p>
- * <p/>
+ *
  * <pre>
- *   &lt;result name="success" type="gxp">/myPackage/MyGxp.gxp&lt;/result>
+ *   &lt;result name="success" type="gxp"&gt;/myPackage/MyGxp.gxp&lt;/result&gt;
  * </pre>
  *
  * @author Bob Lee
@@ -75,6 +77,8 @@ public class GxpResult extends AbstractGxpResult {
 
     /**
      * Whether or not this GXP should output XML.
+     *
+     * @param outputXml set the output XML
      */
     public void setOutputXml(boolean outputXml) {
         this.outputXml = outputXml;
@@ -101,6 +105,8 @@ public class GxpResult extends AbstractGxpResult {
 
     /**
      * Tells the GXP to write itself to the output stream.
+     *
+     * @param actionInvocation the action invocation
      */
     public void execute(ActionInvocation actionInvocation) {
         GxpResourceProvider provider = getProvider();
@@ -116,7 +122,7 @@ public class GxpResult extends AbstractGxpResult {
     }
 
     /**
-     * Gets appropriate provider.
+     * @return  appropriate provider.
      */
     GxpResourceProvider getProvider() {
         return new HtmlOrXmlProvider(outputXml);

@@ -25,11 +25,11 @@
 	This will be done if ActionSupport is used.
 -->
 <#assign hasFieldErrors = parameters.name?? && fieldErrors?? && fieldErrors[parameters.name]??/>
-<#if parameters.errorposition?default("top") == 'top'>
+<#if (parameters.errorposition!"top") == 'top'>
 <#if hasFieldErrors>
 <#list fieldErrors[parameters.name] as error>
 <tr errorFor="${parameters.id}">
-    <td align="center" valign="top" colspan="2"><#rt/>
+    <td class="tdErrorMessage" colspan="2"><#rt/>
         <span class="errorMessage">${error?html}</span><#t/>
     </td><#lt/>
 </tr>
@@ -46,8 +46,8 @@
 	then give the label it's own row in the table
 -->
 <tr>
-<#if labelpos?default("") == 'top'>
-    <td align="left" valign="top" colspan="2"><#rt/>
+<#if (labelpos!"") == 'top'>
+    <td class="tdLabelTop" colspan="2"><#rt/>
 <#else>
     <td class="tdLabel"><#rt/>
 </#if>
@@ -62,20 +62,20 @@
         class="label"<#t/>
 </#if>
     ><#t/>
-<#if parameters.required?default(false) && parameters.requiredPosition?default("right") != 'right'>
+<#if parameters.required!false && parameters.requiredPosition!"right" != 'right'>
         <span class="required">*</span><#t/>
 </#if>
 ${parameters.label?html}<#t/>
-<#if parameters.required?default(false) && parameters.requiredPosition?default("right") == 'right'>
+<#if parameters.required!false && parameters.requiredPosition!"right" == 'right'>
  <span class="required">*</span><#t/>
 </#if>
-${parameters.labelseparator?default(":")?html}<#t/>
+${parameters.labelseparator!":"?html}<#t/>
 <#include "/${parameters.templateDir}/${parameters.expandTheme}/tooltip.ftl" />
 </label><#t/>
 </#if>
     </td><#lt/>
 <#-- add the extra row -->
-<#if labelpos?default("") == 'top'>
+<#if (labelpos!"") == 'top'>
 </tr>
 <tr>
 </#if>

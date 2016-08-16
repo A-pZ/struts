@@ -25,20 +25,18 @@
 <#elseif parameters.labelposition??>
 <#assign labelpos = parameters.labelposition/>
 </#if>
-<#if labelpos?default("top") == 'top'>
+<#if (labelpos!"top") == 'top'>
 <div <#rt/>
 <#else>
 <span <#rt/>
 </#if>
-<#if parameters.align??>
-    align="${parameters.align?html}"<#t/>
-</#if>
+    class="formButton"<#t/>
 <#if parameters.id??>
     id="wwctrl_${parameters.id}"<#rt/>
 </#if>
 ><#t/>
 <#include "/${parameters.templateDir}/simple/reset.ftl" />
-<#if labelpos?default("top") == 'top'>
+<#if (labelpos!"top") == 'top'>
 </div> <#t/>
 <#else>
 </span> <#t/>

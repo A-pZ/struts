@@ -20,39 +20,48 @@
  */
 package org.apache.struts2.json;
 
-import com.opensymphony.xwork2.ActionContext;
-import com.opensymphony.xwork2.ActionInvocation;
-import com.opensymphony.xwork2.Result;
-import com.opensymphony.xwork2.inject.Inject;
-import com.opensymphony.xwork2.util.ValueStack;
-import com.opensymphony.xwork2.util.WildcardUtil;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
-import org.apache.struts2.StrutsConstants;
-import org.apache.struts2.StrutsStatics;
-import org.apache.struts2.json.smd.SMDGenerator;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.struts2.StrutsConstants;
+import org.apache.struts2.StrutsStatics;
+import org.apache.struts2.json.smd.SMDGenerator;
+
+import com.opensymphony.xwork2.ActionContext;
+import com.opensymphony.xwork2.ActionInvocation;
+import com.opensymphony.xwork2.Result;
+import com.opensymphony.xwork2.inject.Inject;
+import com.opensymphony.xwork2.util.ValueStack;
+import com.opensymphony.xwork2.util.WildcardUtil;
+
 /**
- * <!-- START SNIPPET: description --> <p/> This result serializes an action
- * into JSON. <p/> <!-- END SNIPPET: description --> <p/> <p/> <u>Result
- * parameters:</u> <p/> <!-- START SNIPPET: parameters --> <p/>
+ * <!-- START SNIPPET: description -->
+ * <p>
+ * This result serializes an action into JSON.
+ * </p>
+ * <!-- END SNIPPET: description -->
+ * <p><u>Result parameters:</u></p>
+ * <!-- START SNIPPET: parameters -->
  * <ul>
- * <p/>
+ *
  * <li>excludeProperties - list of regular expressions matching the properties
  * to be excluded. The regular expressions are evaluated against the OGNL
  * expression representation of the properties. </li>
- * <p/>
+ *
  * </ul>
- * <p/> <!-- END SNIPPET: parameters --> <p/> <b>Example:</b> <p/>
- * <p/>
+ * <!-- END SNIPPET: parameters -->
+ * <p><b>Example:</b></p>
+ *
  * <pre>
  * &lt;!-- START SNIPPET: example --&gt;
  * &lt;result name=&quot;success&quot; type=&quot;json&quot; /&gt;
@@ -63,7 +72,7 @@ public class JSONResult implements Result {
 
     private static final long serialVersionUID = 8624350183189931165L;
 
-    private static final Logger LOG = LoggerFactory.getLogger(JSONResult.class);
+    private static final Logger LOG = LogManager.getLogger(JSONResult.class);
 
     /**
      * This result type doesn't have a default param, null is ok to reduce noise in logs
@@ -71,7 +80,7 @@ public class JSONResult implements Result {
     public static final String DEFAULT_PARAM = null;
 
     private String encoding;
-    private String defaultEncoding = "ISO-8859-1";
+    private String defaultEncoding = "UTF-8";
     private List<Pattern> includeProperties;
     private List<Pattern> excludeProperties;
     private String root;
@@ -83,6 +92,7 @@ public class JSONResult implements Result {
     private boolean ignoreInterfaces = true;
     private boolean enumAsBean = JSONWriter.ENUM_AS_BEAN_DEFAULT;
     private boolean noCache = false;
+    private boolean cacheBeanInfo = true;
     private boolean excludeNullProperties = false;
     private String defaultDateFormat = null;
     private int statusCode;
@@ -91,12 +101,18 @@ public class JSONResult implements Result {
     private String contentType;
     private String wrapPrefix;
     private String wrapSuffix;
-
+    private boolean devMode = false;
+    
     @Inject(StrutsConstants.STRUTS_I18N_ENCODING)
     public void setDefaultEncoding(String val) {
         this.defaultEncoding = val;
     }
-
+    
+    @Inject(StrutsConstants.STRUTS_DEVMODE) 
+    public void setDevMode(String val) {
+    	this.devMode = BooleanUtils.toBoolean(val);
+    }
+    
     /**
      * Gets a list of regular expressions of properties to exclude from the JSON
      * output.
@@ -116,7 +132,7 @@ public class JSONResult implements Result {
     public void setExcludeProperties(String commaDelim) {
         Set<String> excludePatterns = JSONUtil.asSet(commaDelim);
         if (excludePatterns != null) {
-            this.excludeProperties = new ArrayList<Pattern>(excludePatterns.size());
+            this.excludeProperties = new ArrayList<>(excludePatterns.size());
             for (String pattern : excludePatterns) {
                 this.excludeProperties.add(Pattern.compile(pattern));
             }
@@ -132,7 +148,7 @@ public class JSONResult implements Result {
     public void setExcludeWildcards(String commaDelim) {
         Set<String> excludePatterns = JSONUtil.asSet(commaDelim);
         if (excludePatterns != null) {
-            this.excludeProperties = new ArrayList<Pattern>(excludePatterns.size());
+            this.excludeProperties = new ArrayList<>(excludePatterns.size());
             for (String pattern : excludePatterns) {
                 this.excludeProperties.add(WildcardUtil.compileWildcardPattern(pattern));
             }
@@ -170,7 +186,10 @@ public class JSONResult implements Result {
         ActionContext actionContext = invocation.getInvocationContext();
         HttpServletRequest request = (HttpServletRequest) actionContext.get(StrutsStatics.HTTP_REQUEST);
         HttpServletResponse response = (HttpServletResponse) actionContext.get(StrutsStatics.HTTP_RESPONSE);
-
+        
+        // only permit caching bean information when struts devMode = false
+        cacheBeanInfo = !devMode;
+        
         try {
             Object rootObject;
             rootObject = readRootObject(invocation);
@@ -201,7 +220,7 @@ public class JSONResult implements Result {
 
     protected String createJSONString(HttpServletRequest request, Object rootObject) throws JSONException {
         String json = JSONUtil.serialize(rootObject, excludeProperties, includeProperties, ignoreHierarchy,
-                                         enumAsBean, excludeNullProperties, defaultDateFormat);
+                                         enumAsBean, excludeNullProperties, defaultDateFormat, cacheBeanInfo);
         json = addCallbackIfApplicable(request, json);
         return json;
     }
@@ -222,7 +241,7 @@ public class JSONResult implements Result {
     }
 
     /**
-     * Retrieve the encoding <p/>
+     * Retrieve the encoding
      *
      * @return The encoding associated with this template (defaults to the value
      *         of param 'encoding', if empty default to 'struts.i18n.encoding' property)
@@ -248,8 +267,9 @@ public class JSONResult implements Result {
     protected String addCallbackIfApplicable(HttpServletRequest request, String json) {
         if ((callbackParameter != null) && (callbackParameter.length() > 0)) {
             String callbackName = request.getParameter(callbackParameter);
-            if ((callbackName != null) && (callbackName.length() > 0))
+            if (StringUtils.isNotEmpty(callbackName)) {
                 json = callbackName + "(" + json + ")";
+            }
         }
         return json;
     }
@@ -278,9 +298,7 @@ public class JSONResult implements Result {
     }
 
     /**
-     * Wrap generated JSON with comments
-     *
-     * @param wrapWithComments
+     * @param wrapWithComments Wrap generated JSON with comments
      */
     public void setWrapWithComments(boolean wrapWithComments) {
         this.wrapWithComments = wrapWithComments;
@@ -294,9 +312,7 @@ public class JSONResult implements Result {
     }
 
     /**
-     * Enable SMD generation for action, which can be used for JSON-RPC
-     *
-     * @param enableSMD
+     * @param enableSMD Enable SMD generation for action, which can be used for JSON-RPC
      */
     public void setEnableSMD(boolean enableSMD) {
         this.enableSMD = enableSMD;
@@ -307,7 +323,7 @@ public class JSONResult implements Result {
     }
 
     /**
-     * Controls whether interfaces should be inspected for method annotations
+     * @param ignoreInterfaces  Controls whether interfaces should be inspected for method annotations
      * You may need to set to this true if your action is a proxy as annotations
      * on methods are not inherited
      */
@@ -316,11 +332,9 @@ public class JSONResult implements Result {
     }
 
     /**
-     * Controls how Enum's are serialized : If true, an Enum is serialized as a
+     * @param enumAsBean Controls how Enum's are serialized : If true, an Enum is serialized as a
      * name=value pair (name=name()) (default) If false, an Enum is serialized
      * as a bean with a special property _name=name()
-     *
-     * @param enumAsBean
      */
     public void setEnumAsBean(boolean enumAsBean) {
         this.enumAsBean = enumAsBean;
@@ -343,9 +357,7 @@ public class JSONResult implements Result {
     }
 
     /**
-     * Add headers to response to prevent the browser from caching the response
-     *
-     * @param noCache
+     * @param noCache Add headers to response to prevent the browser from caching the response
      */
     public void setNoCache(boolean noCache) {
         this.noCache = noCache;
@@ -360,27 +372,21 @@ public class JSONResult implements Result {
     }
 
     /**
-     * Do not serialize properties with a null value
-     *
-     * @param excludeNullProperties
+     * @param excludeNullProperties Do not serialize properties with a null value
      */
     public void setExcludeNullProperties(boolean excludeNullProperties) {
         this.excludeNullProperties = excludeNullProperties;
     }
 
     /**
-     * Status code to be set in the response
-     *
-     * @param statusCode
+     * @param statusCode Status code to be set in the response
      */
     public void setStatusCode(int statusCode) {
         this.statusCode = statusCode;
     }
 
     /**
-     * Error code to be set in the response
-     *
-     * @param errorCode
+     * @param errorCode Error code to be set in the response
      */
     public void setErrorCode(int errorCode) {
         this.errorCode = errorCode;
@@ -395,18 +401,14 @@ public class JSONResult implements Result {
     }
 
     /**
-     * Prefix JSON with "{} &&"
-     *
-     * @param prefix
+     * @param prefix Prefix JSON with "{} &amp;&amp;"
      */
     public void setPrefix(boolean prefix) {
         this.prefix = prefix;
     }
 
     /**
-     * Content type to be set in the response
-     *
-     * @param contentType
+     * @param contentType Content type to be set in the response
      */
     public void setContentType(String contentType) {
         this.contentType = contentType;
@@ -417,7 +419,7 @@ public class JSONResult implements Result {
     }
 
     /**
-     * Text to be inserted at the begining of the response
+     * @param wrapPrefix  Text to be inserted at the begining of the response
      */
     public void setWrapPrefix(String wrapPrefix) {
         this.wrapPrefix = wrapPrefix;
@@ -428,7 +430,7 @@ public class JSONResult implements Result {
     }
 
     /**
-     * Text to be inserted at the end of the response
+     * @param wrapSuffix  Text to be inserted at the end of the response
      */
     public void setWrapSuffix(String wrapSuffix) {
         this.wrapSuffix = wrapSuffix;

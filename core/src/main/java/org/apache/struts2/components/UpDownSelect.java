@@ -21,29 +21,26 @@
 
 package org.apache.struts2.components;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import com.opensymphony.xwork2.util.ValueStack;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.struts2.views.annotations.StrutsTag;
 import org.apache.struts2.views.annotations.StrutsTagAttribute;
 
-import com.opensymphony.xwork2.util.ValueStack;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * <!-- START SNIPPET: javadoc -->
- *
+ * <p>
  * Create a Select component with buttons to move the elements in the select component
  * up and down. When the containing form is submited, its elements will be submitted in
  * the order they are arranged (top to bottom).
- *
+ * </p>
  * <!-- END SNIPPET: javadoc -->
- *
- * <p/>
  *
  * <pre>
  * <!-- START SNIPPET: example -->
@@ -73,16 +70,14 @@ import com.opensymphony.xwork2.util.logging.LoggerFactory;
  * <!-- END SNIPPET: example -->
  * </pre>
  *
- * @version $Date$ $Id$
- *
- * @s.tag name="updownselect" tld-body-content="JSP" tld-tag-class="org.apache.struts2.views.jsp.ui.UpDownSelectTag"
+ * {@literal @}s.tag name="updownselect" tld-body-content="JSP" tld-tag-class="org.apache.struts2.views.jsp.ui.UpDownSelectTag"
  * description="Render a up down select element"
  */
 @StrutsTag(name="updownselect", tldTagClass="org.apache.struts2.views.jsp.ui.UpDownSelectTag", 
         description="Create a Select component with buttons to move the elements in the select component up and down")
 public class UpDownSelect extends Select {
 
-    private static final Logger LOG = LoggerFactory.getLogger(UpDownSelect.class);
+    private static final Logger LOG = LogManager.getLogger(UpDownSelect.class);
 
 
     final public static String TEMPLATE = "updownselect";
@@ -109,14 +104,12 @@ public class UpDownSelect extends Select {
 
 
         // override Select's default
-        if (size == null || size.trim().length() <= 0) {
+        if (StringUtils.isBlank(size)) {
             addParameter("size", "5");
         }
-        if (multiple == null || multiple.trim().length() <= 0) {
+        if (StringUtils.isBlank(multiple)) {
             addParameter("multiple", Boolean.TRUE);
         }
-
-
 
         if (allowMoveUp != null) {
             addParameter("allowMoveUp", findValue(allowMoveUp, Boolean.class));
@@ -138,13 +131,12 @@ public class UpDownSelect extends Select {
             addParameter("selectAllLabel", findString(selectAllLabel));
         }
 
-
         // inform our form ancestor about this UpDownSelect so the form knows how to
         // auto select all options upon it submission
         Form ancestorForm = (Form) findAncestor(Form.class);
         if (ancestorForm != null) {
 
-            // inform form ancestor that we are using a custom onsubmit
+            // inform form ancestor that we are using a custom onSubmit
             enableAncestorFormCustomOnsubmit();
 
             Map m = (Map) ancestorForm.getParameters().get("updownselectIds");

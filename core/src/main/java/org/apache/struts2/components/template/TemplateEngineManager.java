@@ -24,6 +24,7 @@ package org.apache.struts2.components.template;
 import com.opensymphony.xwork2.config.ConfigurationException;
 import com.opensymphony.xwork2.inject.Container;
 import com.opensymphony.xwork2.inject.Inject;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.struts2.StrutsConstants;
 
 import java.util.Collections;
@@ -36,11 +37,13 @@ import java.util.Set;
  */
 public class TemplateEngineManager {
 
-    /** The default template extenstion is <code>ftl</code>. */
+    /**
+     * The default template extension is <code>ftl</code>.
+     */
     public static final String DEFAULT_TEMPLATE_TYPE = "ftl";
 
-    
-    Map<String,EngineFactory> templateEngines = new HashMap<String,EngineFactory>();
+
+    Map<String, EngineFactory> templateEngines = new HashMap<>();
     Container container;
     String defaultTemplateType;
     
@@ -52,19 +55,23 @@ public class TemplateEngineManager {
     @Inject
     public void setContainer(Container container) {
         this.container = container;
-        Map<String,EngineFactory> map = new HashMap<String,EngineFactory>();
+        Map<String, EngineFactory> map = new HashMap<>();
         Set<String> prefixes = container.getInstanceNames(TemplateEngine.class);
         for (String prefix : prefixes) {
             map.put(prefix, new LazyEngineFactory(prefix));
         }
         this.templateEngines = Collections.unmodifiableMap(map);
-        
     }
     
     /**
+     * <p>
      * Registers the given template engine.
-     * <p/>
+     * </p>
+     *
+     * <p>
      * Will add the engine to the existing list of known engines.
+     * </p>
+     *
      * @param templateExtension  filename extension (eg. .jsp, .ftl, .vm).
      * @param templateEngine     the engine.
      */
@@ -77,11 +84,13 @@ public class TemplateEngineManager {
     }
 
     /**
+     * <p>
      * Gets the TemplateEngine for the template name. If the template name has an extension (for instance foo.jsp), then
      * this extension will be used to look up the appropriate TemplateEngine. If it does not have an extension, it will
      * look for a Configuration setting "struts.ui.templateSuffix" for the extension, and if that is not set, it
      * will fall back to "ftl" as the default.
-     *
+     * </p>
+     * 
      * @param template               Template used to determine which TemplateEngine to return
      * @param templateTypeOverride Overrides the default template type
      * @return the engine.
@@ -89,9 +98,9 @@ public class TemplateEngineManager {
     public TemplateEngine getTemplateEngine(Template template, String templateTypeOverride) {
         String templateType = DEFAULT_TEMPLATE_TYPE;
         String templateName = template.toString();
-        if (templateName.indexOf(".") > 0) {
-            templateType = templateName.substring(templateName.indexOf(".") + 1);
-        } else if (templateTypeOverride !=null && templateTypeOverride.length() > 0) {
+        if (StringUtils.contains(templateName, ".")) {
+            templateType = StringUtils.substring(templateName, StringUtils.indexOf(templateName, ".") + 1);
+        } else if (StringUtils.isNotBlank(templateTypeOverride)) {
             templateType = templateTypeOverride;
         } else {
             String type = defaultTemplateType;
@@ -104,7 +113,7 @@ public class TemplateEngineManager {
 
     /** Abstracts loading of the template engine */
     interface EngineFactory {
-        public TemplateEngine create();
+        TemplateEngine create();
     }    
 
     /** 

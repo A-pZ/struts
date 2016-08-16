@@ -23,8 +23,8 @@ package org.apache.struts2.interceptor;
 
 import com.opensymphony.xwork2.ActionInvocation;
 import com.opensymphony.xwork2.interceptor.AbstractInterceptor;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.struts2.ServletActionContext;
 
 import javax.servlet.http.HttpServletRequest;
@@ -35,10 +35,12 @@ import java.util.List;
 
 /**
  * <!-- START SNIPPET: description -->
+ * <p>
  * This interceptor ensures that the action will only be executed if the user has the correct role.
+ * </p>
  * <!-- END SNIPPET: description -->
  *
- * <p/> <u>Interceptor parameters:</u>
+ * <p><u>Interceptor parameters:</u></p>
  *
  * <!-- START SNIPPET: parameters -->
  *
@@ -53,20 +55,23 @@ import java.util.List;
  * <p>
  * When both allowedRoles and disallowedRoles are configured, then disallowedRoles
  * takes precedence, applying the following logic: 
- *  (if ((inRole(role1) || inRole(role2) || ... inRole(roleN)) && 
- *       !inRole(roleA) && !inRole(roleB) && ... !inRole(roleZ))
+ *  (if ((inRole(role1) || inRole(role2) || ... inRole(roleN)) &amp;&amp;
+ *       !inRole(roleA) &amp;&amp; !inRole(roleB) &amp;&amp; ... !inRole(roleZ))
  *  { //permit ...
  * </p>
  * <!-- END SNIPPET: parameters -->
  *
  * <!-- START SNIPPET: extending -->
+ * <p>
  * There are three extensions to the existing interceptor:
+ * </p>
+ *
  * <ul>
  *   <li>isAllowed(HttpServletRequest,Object) - whether or not to allow
  *       the passed action execution with this request</li>
  *   <li>handleRejection(ActionInvocation) - handles an unauthorized
  *       request.</li>
- *   <li>areRolesValid(List<String> roles) - allows subclasses to lookup roles
+ *   <li>areRolesValid(List&lt;String&gt; roles) - allows subclasses to lookup roles
  *   to ensure they are valid.  If not valid, RolesInterceptor will log the error and 
  *   cease to function.  This helps prevent security misconfiguration flaws.
  *   
@@ -88,7 +93,7 @@ import java.util.List;
  */
 public class RolesInterceptor extends AbstractInterceptor {
 
-    private static final Logger LOG = LoggerFactory.getLogger(RolesInterceptor.class);
+    private static final Logger LOG = LogManager.getLogger(RolesInterceptor.class);
 
     private boolean isProperlyConfigured = true;
     
@@ -107,7 +112,7 @@ public class RolesInterceptor extends AbstractInterceptor {
     
     private void checkRoles(List<String> roles){
         if (!areRolesValid(roles)){
-          LOG.fatal("An unknown Role was configured: #0", roles.toString());
+          LOG.fatal("An unknown Role was configured: {}", roles);
           isProperlyConfigured = false;
           throw new IllegalArgumentException("An unknown role was configured: " + roles);
         }
@@ -120,14 +125,18 @@ public class RolesInterceptor extends AbstractInterceptor {
           throw new IllegalArgumentException("RolesInterceptor is misconfigured, check logs for erroneous configuration!");
         }
         if (!isAllowed(request, invocation.getAction())) {
+            LOG.debug("Request is NOT allowed. Rejecting.");
             return handleRejection(invocation, response);
         } else {
+            LOG.debug("Request is allowed. Invoking.");
             return invocation.invoke();
         }
     }
 
     /**
      * Splits a string into a List
+     * @param val the string to split
+     * @return the string list
      */
     protected List<String> stringToList(String val) {
         if (val != null) {
@@ -148,16 +157,19 @@ public class RolesInterceptor extends AbstractInterceptor {
     protected boolean isAllowed(HttpServletRequest request, Object action) {
         for (String role : disallowedRoles) {
             if (request.isUserInRole(role)) {
+                LOG.debug("User role '{}' is in the disallowedRoles list.", role);
                 return false;
             }
         }
   
         if (allowedRoles.isEmpty()){
+            LOG.debug("The allowedRoles list is empty.");
             return true;
         }
         
         for (String role : allowedRoles) {
             if (request.isUserInRole(role)) {
+                LOG.debug("User role '{}' is in the allowedRoles list.", role);
                 return true;
             }
         }
@@ -169,12 +181,11 @@ public class RolesInterceptor extends AbstractInterceptor {
      * Handles a rejection by sending a 403 HTTP error
      *
      * @param invocation The invocation
+     * @param response the servlet response object
      * @return The result code
-     * @throws Exception
+     * @throws Exception in case of any error
      */
-    protected String handleRejection(ActionInvocation invocation,
-            HttpServletResponse response)
-            throws Exception {
+    protected String handleRejection(ActionInvocation invocation, HttpServletResponse response) throws Exception {
         response.sendError(HttpServletResponse.SC_FORBIDDEN);
         return null;
     }

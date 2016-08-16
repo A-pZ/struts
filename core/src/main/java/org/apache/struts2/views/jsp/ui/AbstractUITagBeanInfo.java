@@ -21,8 +21,8 @@
 
 package org.apache.struts2.views.jsp.ui;
 
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.beans.PropertyDescriptor;
 import java.beans.SimpleBeanInfo;
@@ -37,12 +37,12 @@ import java.util.List;
  */
 public class AbstractUITagBeanInfo extends SimpleBeanInfo {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AbstractUITagBeanInfo.class);
+    private static final Logger LOG = LogManager.getLogger(AbstractUITagBeanInfo.class);
 
     @Override
     public PropertyDescriptor[] getPropertyDescriptors() {
         try {
-            List<PropertyDescriptor> descriptors = new ArrayList<PropertyDescriptor>();
+            List<PropertyDescriptor> descriptors = new ArrayList<>();
 
             // Add the tricky one first
             Method classSetter = AbstractUITag.class.getMethod("setCssClass", String.class);

@@ -23,13 +23,14 @@ package org.apache.struts2.convention;
 import com.opensymphony.xwork2.config.Configuration;
 import com.opensymphony.xwork2.config.ConfigurationException;
 import com.opensymphony.xwork2.config.ConfigurationProvider;
+import com.opensymphony.xwork2.inject.Container;
 import com.opensymphony.xwork2.inject.ContainerBuilder;
 import com.opensymphony.xwork2.inject.Inject;
-import com.opensymphony.xwork2.inject.Container;
 import com.opensymphony.xwork2.util.location.LocatableProperties;
-import org.apache.struts2.dispatcher.DispatcherListener;
-import org.apache.struts2.dispatcher.Dispatcher;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.struts2.StrutsConstants;
+import org.apache.struts2.dispatcher.Dispatcher;
+import org.apache.struts2.dispatcher.DispatcherListener;
 
 /**
  * <p>
@@ -49,25 +50,28 @@ public class ClasspathConfigurationProvider implements ConfigurationProvider, Di
 
     @Inject(StrutsConstants.STRUTS_DEVMODE)
     public void setDevMode(String mode) {
-        this.devMode = "true".equals(mode);
+        this.devMode = BooleanUtils.toBoolean(mode);
     }
 
     @Inject("struts.convention.classes.reload")
     public void setReload(String reload) {
-        this.reload = "true".equals(reload);
+        this.reload = BooleanUtils.toBoolean(reload);
     }
 
     /**
      * Not used.
      */
     public void destroy() {
-        if (this.listeningToDispatcher)
+        if (this.listeningToDispatcher) {
             Dispatcher.removeDispatcherListener(this);
+        }
         actionConfigBuilder.destroy();
     }
 
     /**
      * Not used.
+     *
+     * @param configuration configuration
      */
     public void init(Configuration configuration) {
         if (devMode && reload && !listeningToDispatcher) {
@@ -80,6 +84,11 @@ public class ClasspathConfigurationProvider implements ConfigurationProvider, Di
 
     /**
      * Does nothing.
+     *
+     * @param containerBuilder container builder
+     * @param locatableProperties locatable properties
+     *
+     * @throws ConfigurationException in case of configuration errors
      */
     public void register(ContainerBuilder containerBuilder, LocatableProperties locatableProperties)
             throws ConfigurationException {
@@ -88,14 +97,13 @@ public class ClasspathConfigurationProvider implements ConfigurationProvider, Di
     /**
      * Loads the packages using the {@link ActionConfigBuilder}.
      *
-     * @throws ConfigurationException
+     * @throws ConfigurationException in case of configuration errors
      */
     public void loadPackages() throws ConfigurationException {
     }
 
     /**
-     * Depends on devMode, relead and actionConfigBuilder.needsReload()
-     * @return Always false.
+     * @return true if devMode, reload and actionConfigBuilder.needsReload()
      */
     public boolean needsReload() {
         return devMode && reload && actionConfigBuilder.needsReload();

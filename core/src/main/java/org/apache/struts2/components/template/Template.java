@@ -25,10 +25,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A template.
- * <p/>
+ * <p>
  * A template is used as a model for rendering output.
  * This object contains basic common template information
+ * </p>
  */
 public class Template implements Cloneable {
     String dir;
@@ -83,7 +83,7 @@ public class Template implements Cloneable {
      * @return a string in the format <code>/dir/theme/name</code>.
      */
     public String toString() {
-        return "/" + dir + "/" + theme + "/" + name;
+        return new StringBuilder().append("/").append(dir).append("/").append(theme).append("/").append(name).toString();
     }
 
     protected Object clone() throws CloneNotSupportedException {

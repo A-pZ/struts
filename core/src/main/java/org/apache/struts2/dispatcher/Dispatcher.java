@@ -38,9 +38,11 @@ import com.opensymphony.xwork2.util.ValueStackFactory;
 import com.opensymphony.xwork2.util.location.LocatableProperties;
 import com.opensymphony.xwork2.util.location.Location;
 import com.opensymphony.xwork2.util.location.LocationUtils;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
 import com.opensymphony.xwork2.util.profiling.UtilTimerStack;
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.struts2.ServletActionContext;
 import org.apache.struts2.StrutsConstants;
 import org.apache.struts2.StrutsException;
@@ -70,30 +72,24 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * of the primary dispatcher holds an instance of this dispatcher to be shared for
  * all requests.
  *
- * @see org.apache.struts2.dispatcher.ng.InitOperations
+ * @see InitOperations
  */
 public class Dispatcher {
 
     /**
      * Provide a logging instance.
      */
-    private static final Logger LOG = LoggerFactory.getLogger(Dispatcher.class);
+    private static final Logger LOG = LogManager.getLogger(Dispatcher.class);
 
     /**
      * Provide a thread local instance.
      */
-    private static ThreadLocal<Dispatcher> instance = new ThreadLocal<Dispatcher>();
+    private static ThreadLocal<Dispatcher> instance = new ThreadLocal<>();
 
     /**
      * Store list of DispatcherListeners.
      */
-    private static List<DispatcherListener> dispatcherListeners =
-        new CopyOnWriteArrayList<DispatcherListener>();
-
-    /**
-     * Store ConfigurationManager instance, set on init.
-     */
-    private ConfigurationManager configurationManager;
+    private static List<DispatcherListener> dispatcherListeners = new CopyOnWriteArrayList<>();
 
     /**
      * Store state of StrutsConstants.STRUTS_DEVMODE setting.
@@ -131,11 +127,15 @@ public class Dispatcher {
     private static final String DEFAULT_CONFIGURATION_PATHS = "struts-default.xml,struts-plugin.xml,struts.xml";
 
     /**
+     * <p>
      * Store state of STRUTS_DISPATCHER_PARAMETERSWORKAROUND.
-     * <p/>
+     * </p>
+     *
+     * <p>
      * The workaround is for WebLogic.
-     * We try to autodect WebLogic on Dispatcher init.
+     * We try to autodetect WebLogic on Dispatcher init.
      * The workaround can also be enabled manually.
+     * </p>
      */
     private boolean paramsWorkaroundEnabled = false;
 
@@ -149,6 +149,11 @@ public class Dispatcher {
      * Interface used to handle internal errors or missing resources
      */
     private DispatcherErrorHandler errorHandler;
+
+    /**
+     * Store ConfigurationManager instance, set on init.
+     */
+    protected ConfigurationManager configurationManager;
 
     /**
      * Provide the dispatcher instance for the current thread.
@@ -220,7 +225,7 @@ public class Dispatcher {
      */
     @Inject(value=StrutsConstants.STRUTS_DISABLE_REQUEST_ATTRIBUTE_VALUE_STACK_LOOKUP, required=false)
     public void setDisableRequestAttributeValueStackLookup(String disableRequestAttributeValueStackLookup) {
-        this.disableRequestAttributeValueStackLookup = "true".equalsIgnoreCase(disableRequestAttributeValueStackLookup);
+        this.disableRequestAttributeValueStackLookup = BooleanUtils.toBoolean(disableRequestAttributeValueStackLookup);
     }
 
     /**
@@ -278,9 +283,7 @@ public class Dispatcher {
     	// clean up ObjectFactory
         ObjectFactory objectFactory = getContainer().getInstance(ObjectFactory.class);
         if (objectFactory == null) {
-            if (LOG.isWarnEnabled()) {
         	LOG.warn("Object Factory is null, something is seriously wrong, no clean up will be performed");
-            }
         }
         if (objectFactory instanceof ObjectFactoryDestroyable) {
             try {
@@ -288,7 +291,7 @@ public class Dispatcher {
             }
             catch(Exception e) {
                 // catch any exception that may occurred during destroy() and log it
-                LOG.error("exception occurred while destroying ObjectFactory [#0]", e, objectFactory.toString());
+                LOG.error("Exception occurred while destroying ObjectFactory [{}]", objectFactory.toString(), e);
             }
         }
 
@@ -303,7 +306,7 @@ public class Dispatcher {
         }
 
         // clean up all interceptors by calling their destroy() method
-        Set<Interceptor> interceptors = new HashSet<Interceptor>();
+        Set<Interceptor> interceptors = new HashSet<>();
         Collection<PackageConfig> packageConfigs = configurationManager.getConfiguration().getPackageConfigs().values();
         for (PackageConfig packageConfig : packageConfigs) {
             for (Object config : packageConfig.getAllInterceptorConfigs().values()) {
@@ -333,9 +336,7 @@ public class Dispatcher {
         if (initParams.containsKey(StrutsConstants.STRUTS_FILE_MANAGER)) {
             final String fileManagerClassName = initParams.get(StrutsConstants.STRUTS_FILE_MANAGER);
             final Class<FileManager> fileManagerClass = (Class<FileManager>) Class.forName(fileManagerClassName);
-            if (LOG.isInfoEnabled()) {
-                LOG.info("Custom FileManager specified: #0", fileManagerClassName);
-            }
+            LOG.info("Custom FileManager specified: {}", fileManagerClassName);
             configurationManager.addContainerProvider(new FileManagerProvider(fileManagerClass, fileManagerClass.getSimpleName()));
         } else {
             // add any other Struts 2 provided implementations of FileManager
@@ -344,9 +345,7 @@ public class Dispatcher {
         if (initParams.containsKey(StrutsConstants.STRUTS_FILE_MANAGER_FACTORY)) {
             final String fileManagerFactoryClassName = initParams.get(StrutsConstants.STRUTS_FILE_MANAGER_FACTORY);
             final Class<FileManagerFactory> fileManagerFactoryClass = (Class<FileManagerFactory>) Class.forName(fileManagerFactoryClassName);
-            if (LOG.isInfoEnabled()) {
-                LOG.info("Custom FileManagerFactory specified: #0", fileManagerFactoryClassName);
-            }
+            LOG.info("Custom FileManagerFactory specified: {}", fileManagerFactoryClassName);
             configurationManager.addContainerProvider(new FileManagerFactoryProvider(fileManagerFactoryClass));
         }
     }
@@ -394,6 +393,9 @@ public class Dispatcher {
                 try {
                     Class cls = ClassLoaderUtil.loadClass(cname, this.getClass());
                     ConfigurationProvider prov = (ConfigurationProvider)cls.newInstance();
+                    if (prov instanceof ServletContextAwareConfigurationProvider) {
+                        ((ServletContextAwareConfigurationProvider)prov).initWithContext(servletContext);
+                    }
                     configurationManager.addContainerProvider(prov);
                 } catch (InstantiationException e) {
                     throw new ConfigurationException("Unable to instantiate provider: "+cname, e);
@@ -445,11 +447,8 @@ public class Dispatcher {
 
     private void init_CheckWebLogicWorkaround(Container container) {
         // test whether param-access workaround needs to be enabled
-        if (servletContext != null && servletContext.getServerInfo() != null
-                && servletContext.getServerInfo().contains("WebLogic")) {
-            if (LOG.isInfoEnabled()) {
-        	LOG.info("WebLogic server detected. Enabling Struts parameter access work-around.");
-            }
+        if (servletContext != null && StringUtils.contains(servletContext.getServerInfo(), "WebLogic")) {
+            LOG.info("WebLogic server detected. Enabling Struts parameter access work-around.");
             paramsWorkaroundEnabled = true;
         } else {
             paramsWorkaroundEnabled = "true".equals(container.getInstance(String.class,
@@ -488,8 +487,7 @@ public class Dispatcher {
             errorHandler.init(servletContext);
 
         } catch (Exception ex) {
-            if (LOG.isErrorEnabled())
-                LOG.error("Dispatcher initialization failed", ex);
+            LOG.error("Dispatcher initialization failed", ex);
             throw new StrutsException(ex);
         }
     }
@@ -499,24 +497,18 @@ public class Dispatcher {
     }
 
     /**
-     * @deprecated use version without ServletContext param
-     */
-    @Deprecated
-    public void serviceAction(HttpServletRequest request, HttpServletResponse response, ServletContext context,
-                              ActionMapping mapping) throws ServletException {
-
-        serviceAction(request, response, mapping);
-    }
-
-    /**
+     * <p>
      * Load Action class for mapping and invoke the appropriate Action method, or go directly to the Result.
-     * <p/>
+     * </p>
+     *
+     * <p>
      * This method first creates the action context from the given parameters,
      * and then loads an <tt>ActionProxy</tt> from the given action name and namespace.
      * After that, the Action method is executed and output channels through the response object.
      * Actions not found are sent back to the user via the {@link Dispatcher#sendError} method,
      * using the 404 return code.
      * All other errors are reported by throwing a ServletException.
+     * </p>
      *
      * @param request  the HttpServletRequest object
      * @param response the HttpServletResponse object
@@ -595,20 +587,10 @@ public class Dispatcher {
             uri = uri + "?" + request.getQueryString();
         }
         if (devMode) {
-            LOG.error("Could not find action or result\n#0", e, uri);
+            LOG.error("Could not find action or result: {}", uri, e);
         } else if (LOG.isWarnEnabled()) {
-            LOG.warn("Could not find action or result: #0", e, uri);
+            LOG.warn("Could not find action or result: {}", uri, e);
         }
-    }
-
-    /**
-     * @deprecated use version without servletContext param
-     */
-    @Deprecated
-    public Map<String,Object> createContextMap(HttpServletRequest request, HttpServletResponse response,
-            ActionMapping mapping, ServletContext context) {
-
-        return createContextMap(request, response, mapping);
     }
 
     /**
@@ -645,21 +627,6 @@ public class Dispatcher {
     }
 
     /**
-     * @deprecated use version without ServletContext param
-     */
-    @Deprecated
-    public HashMap<String,Object> createContextMap(Map requestMap,
-                                    Map parameterMap,
-                                    Map sessionMap,
-                                    Map applicationMap,
-                                    HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    ServletContext servletContext) {
-
-        return createContextMap(requestMap, parameterMap, sessionMap, applicationMap, request, response);
-    }
-
-    /**
      * Merge all application and servlet attributes into a single <tt>HashMap</tt> to represent the entire
      * <tt>Action</tt> context.
      *
@@ -679,7 +646,7 @@ public class Dispatcher {
                                     Map applicationMap,
                                     HttpServletRequest request,
                                     HttpServletResponse response) {
-        HashMap<String,Object> extraContext = new HashMap<String,Object>();
+        HashMap<String, Object> extraContext = new HashMap<>();
         extraContext.put(ActionContext.PARAMETERS, new HashMap(parameterMap));
         extraContext.put(ActionContext.SESSION, sessionMap);
         extraContext.put(ActionContext.APPLICATION, applicationMap);
@@ -719,9 +686,7 @@ public class Dispatcher {
 
         if (saveDir.equals("")) {
             File tempdir = (File) servletContext.getAttribute("javax.servlet.context.tempdir");
-            if (LOG.isInfoEnabled()) {
         	LOG.info("Unable to find 'struts.multipart.saveDir' property setting. Defaulting to javax.servlet.context.tempdir");
-            }
 
             if (tempdir != null) {
                 saveDir = tempdir.toString();
@@ -741,17 +706,13 @@ public class Dispatcher {
                     if (devMode) {
                         LOG.error(logMessage);
                     } else {
-                        if (LOG.isWarnEnabled()) {
-                            LOG.warn(logMessage);
-                        }
+                        LOG.warn(logMessage);
                     }
                 }
             }
         }
 
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("saveDir=" + saveDir);
-        }
+        LOG.debug("saveDir={}", saveDir);
 
         return saveDir;
     }
@@ -798,25 +759,21 @@ public class Dispatcher {
                 request.setCharacterEncoding(encoding);
             }
         } catch (Exception e) {
-            LOG.error("Error setting character encoding to '" + encoding + "' - ignoring.", e);
+            LOG.error("Error setting character encoding to '{}' - ignoring.", encoding, e);
         }
     }
 
     /**
-     * @deprecated use version without ServletContext param
-     */
-    @Deprecated
-    public HttpServletRequest wrapRequest(HttpServletRequest request, ServletContext servletContext) throws IOException {
-        return wrapRequest(request);
-    }
-
-    /**
+     * <p>
      * Wrap and return the given request or return the original request object.
      * </p>
+     *
+     * <p>
      * This method transparently handles multipart data as a wrapped class around the given request.
      * Override this method to handle multipart requests in a special way or to handle other types of requests.
      * Note, {@link org.apache.struts2.dispatcher.multipart.MultiPartRequestWrapper} is
      * flexible - look first to that object before overriding this method to handle multipart data.
+     * </p>
      *
      * @param request the HttpServletRequest object.
      * @return a wrapped request or original request.
@@ -847,7 +804,7 @@ public class Dispatcher {
      * On each request it must return a new instance as implementation could be not thread safe
      * and thus ensure of resource clean up
      *
-     * @return
+     * @return a multi part request object
      */
     protected MultiPartRequest getMultiPartRequest() {
         MultiPartRequest mpr = null;
@@ -877,22 +834,6 @@ public class Dispatcher {
         }
         MultiPartRequestWrapper multiWrapper = (MultiPartRequestWrapper) request;
         multiWrapper.cleanUp();
-    }
-
-    /**
-     * Send an HTTP error response code.
-     *
-     * @param request  the HttpServletRequest object.
-     * @param response the HttpServletResponse object.
-     * @param code     the HttpServletResponse error code (see {@link javax.servlet.http.HttpServletResponse} for possible error codes).
-     * @param e        the Exception that is reported.
-     * @param ctx      the ServletContext object.
-     *
-     * @deprecated remove in version 3.0 - use version without ServletContext parameter
-     */
-    @Deprecated
-    public void sendError(HttpServletRequest request, HttpServletResponse response, ServletContext ctx, int code, Exception e) {
-        sendError(request, response, code, e);
     }
 
     /**
@@ -939,17 +880,6 @@ public class Dispatcher {
      */
     public ConfigurationManager getConfigurationManager() {
         return configurationManager;
-    }
-
-    /**
-     * Modify the ConfigurationManager instance
-     *
-     * @param mgr The configuration manager
-     * @deprecated should be removed as is used only in tests
-     */
-    public void setConfigurationManager(ConfigurationManager mgr) {
-        ContainerHolder.clear();
-        this.configurationManager = mgr;
     }
 
     /**

@@ -24,43 +24,47 @@ package org.apache.struts2.rest;
 import com.opensymphony.xwork2.Action;
 import com.opensymphony.xwork2.ActionContext;
 import com.opensymphony.xwork2.ActionInvocation;
-import com.opensymphony.xwork2.ValidationAware;
+import com.opensymphony.xwork2.interceptor.ValidationAware;
 import com.opensymphony.xwork2.inject.Inject;
 import com.opensymphony.xwork2.interceptor.MethodFilterInterceptor;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.struts2.ServletActionContext;
 import org.apache.struts2.dispatcher.mapper.ActionMapping;
 
-import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 import java.util.HashMap;
 import java.util.Map;
 
+import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
+
 /**
  * <!-- START SNIPPET: description -->
- *
+ * <p>
  * An interceptor that makes sure there are not validation errors before allowing the interceptor chain to continue.
  * <b>This interceptor does not perform any validation</b>.
- * 
+ * </p>
+ *
  * <p>Copied from the {@link com.opensymphony.xwork2.interceptor.DefaultWorkflowInterceptor}, this interceptor adds support for error handling of Restful
  * operations.  For example, if an validation error is discovered, a map of errors is created and processed to be
  * returned, using the appropriate content handler for rendering the body.</p>
  *
- * <p/>This interceptor does nothing if the name of the method being invoked is specified in the <b>excludeMethods</b>
+ * <p>This interceptor does nothing if the name of the method being invoked is specified in the <b>excludeMethods</b>
  * parameter. <b>excludeMethods</b> accepts a comma-delimited list of method names. For example, requests to
  * <b>foo!input.action</b> and <b>foo!back.action</b> will be skipped by this interceptor if you set the
  * <b>excludeMethods</b> parameter to "input, back".
+ * </p>
  *
+ * <p>
  * <b>Note:</b> As this method extends off MethodFilterInterceptor, it is capable of
  * deciding if it is applicable only to selective methods in the action class. This is done by adding param tags
  * for the interceptor element, naming either a list of excluded method names and/or a list of included method
  * names, whereby includeMethods overrides excludedMethods. A single * sign is interpreted as wildcard matching
  * all methods for both parameters.
  * See {@link MethodFilterInterceptor} for more info.
- *
+ * </p>
  * <!-- END SNIPPET: description -->
  *
- * <p/> <u>Interceptor parameters:</u>
+ * <p><u>Interceptor parameters:</u></p>
  *
  * <!-- START SNIPPET: parameters -->
  *
@@ -73,17 +77,15 @@ import java.util.Map;
  *
  * <!-- END SNIPPET: parameters -->
  *
- * <p/> <u>Extending the interceptor:</u>
- *
- * <p/>
+ * <p><u>Extending the interceptor:</u></p>
  *
  * <!-- START SNIPPET: extending -->
- *
+ * <p>
  * There are no known extension points for this interceptor.
- *
+ * </p>
  * <!-- END SNIPPET: extending -->
  *
- * <p/> <u>Example code:</u>
+ * <p><u>Example code:</u></p>
  *
  * <pre>
  * <!-- START SNIPPET: example -->
@@ -134,7 +136,7 @@ public class RestWorkflowInterceptor extends MethodFilterInterceptor {
 	
 	private static final long serialVersionUID = 7563014655616490865L;
 
-	private static final Logger LOG = LoggerFactory.getLogger(RestWorkflowInterceptor.class);
+	private static final Logger LOG = LogManager.getLogger(RestWorkflowInterceptor.class);
 	
 	private String inputResultName = Action.INPUT;
 	
@@ -200,9 +202,7 @@ public class RestWorkflowInterceptor extends MethodFilterInterceptor {
             ValidationAware validationAwareAction = (ValidationAware) action;
 
             if (validationAwareAction.hasErrors()) {
-            	if (LOG.isDebugEnabled()) {
-            		LOG.debug("Errors on action "+validationAwareAction+", returning result name 'input'");
-            	}
+          		LOG.debug("Errors on action {}, returning result name 'input'", validationAwareAction);
             	ActionMapping mapping = (ActionMapping) ActionContext.getContext().get(ServletActionContext.ACTION_MAPPING);
             	String method = inputResultName;
                 if (postMethodName.equals(mapping.getMethod())) {
@@ -217,7 +217,7 @@ public class RestWorkflowInterceptor extends MethodFilterInterceptor {
             	    .renderResult(method)
             	    .withStatus(validationFailureStatusCode);
             	
-            	Map errors = new HashMap();
+            	Map<String, Object> errors = new HashMap<>();
             	
             	errors.put("actionErrors", validationAwareAction.getActionErrors());
             	errors.put("fieldErrors", validationAwareAction.getFieldErrors());

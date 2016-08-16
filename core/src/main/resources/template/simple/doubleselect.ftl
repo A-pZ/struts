@@ -75,8 +75,9 @@
 <script type="text/javascript">
     <#assign itemCount = startCount/>
     var ${parameters.id}Group = new Array(${parameters.listSize} + ${startCount});
-    for (i = 0; i < (${parameters.listSize} + ${startCount}); i++)
-        ${parameters.id}Group[i] = new Array();
+    for (var i = 0; i < (${parameters.listSize} + ${startCount}); i++) {
+        ${parameters.id}Group[i] = [];
+    }
 
     <@s.iterator value="parameters.list">
         <#if parameters.listKey??>
@@ -91,7 +92,7 @@
         </#if>
         <#assign doubleItemCount = 0/>
         <#if parameters.doubleHeaderKey?? && parameters.doubleHeaderValue??>
-        ${parameters.id}Group[${itemCount}][${doubleItemCount}] = new Option("${doubleHeaderValue?js_string}", "${doubleHeaderKey?js_string}");
+        ${parameters.id}Group[${itemCount}][${doubleItemCount}] = new Option("${parameters.doubleHeaderValue?js_string}", "${parameters.doubleHeaderKey?js_string}");
             <#assign doubleItemCount = doubleItemCount + 1/>
         </#if>
         <#if parameters.doubleEmptyOption??>
@@ -132,13 +133,13 @@
             </#if>
         </#if>
     ${parameters.id}Group[${itemCount}][${doubleItemCount}] = new Option("${doubleItemValue?js_string}", "${doubleItemKeyStr?js_string}");
-        <#if itemDoubleCssClass! != "">
+        <#if itemDoubleCssClass??>
     ${parameters.id}Group[${itemCount}][${doubleItemCount}].setAttribute("class","${itemDoubleCssClass?html}");
         </#if>
-        <#if itemDoubleCssStyle! != "">
+        <#if itemDoubleCssStyle??>
         ${parameters.id}Group[${itemCount}][${doubleItemCount}].setAttribute("style","${itemDoubleCssStyle?html}");
         </#if>
-        <#if itemDoubleTitle! != "">
+        <#if itemDoubleTitle??>
         ${parameters.id}Group[${itemCount}][${doubleItemCount}].setAttribute("title","${itemDoubleTitle?html}");
         </#if>
 
@@ -164,19 +165,15 @@
     ${parameters.id}Redirect(${redirectTo});
     function ${parameters.id}Redirect(x) {
         var selected = false;
-        for (m = ${parameters.id}Temp.options.length - 1; m >= 0; m--) {
+        for (var m = ${parameters.id}Temp.options.length - 1; m >= 0; m--) {
             ${parameters.id}Temp.remove(m);
         }
 
-        for (i = 0; i < ${parameters.id}Group[x].length; i++) {
+        for (var i = 0; i < ${parameters.id}Group[x].length; i++) {
             ${parameters.id}Temp.options[i] = new Option(${parameters.id}Group[x][i].text, ${parameters.id}Group[x][i].value);
         <#if parameters.doubleNameValue??>
             <#if parameters.doubleMultiple??>
-                for (j = 0; j < ${parameters.doubleNameValue}.
-                length;
-                j++
-            )
-                {
+                for (var j = 0; j < ${parameters.doubleNameValue}.length; j++) {
                     if (${parameters.id}Temp.options[i].value == ${parameters.doubleNameValue?js_string}[j]) {
                         ${parameters.id}Temp.options[i].selected = true;
                         selected = true;

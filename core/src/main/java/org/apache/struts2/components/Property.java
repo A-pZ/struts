@@ -22,9 +22,9 @@
 package org.apache.struts2.components;
 
 import com.opensymphony.xwork2.util.ValueStack;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.struts2.views.annotations.StrutsTag;
 import org.apache.struts2.views.annotations.StrutsTagAttribute;
 
@@ -33,20 +33,20 @@ import java.io.Writer;
 
 /**
  * <!-- START SNIPPET: javadoc -->
- *
+ * <p>
  * Used to get the property of a <i>value</i>, which will default to the top of
  * the stack if none is specified.
- *
+ * </p>
  * <!-- END SNIPPET: javadoc -->
- *
- * <p/>
- *
  *
  * <!-- START SNIPPET: params -->
  *
  * <ul>
  *      <li>default (String) - The default value to be used if <u>value</u> attribute is null</li>
- *      <li>escape (Boolean) - Escape HTML. Default to true</li>
+ *      <li>escapeCsv (Boolean) - Escape CSV. Defaults to false</li>
+ *      <li>escapeHtml (Boolean) - Escape HTML. Defaults to true</li>
+ *      <li>escapeJavaScript (Boolean) - Escape JavaScript. Defaults to false</li>
+ *      <li>escapeXml (Boolean) - Escape XML. Defaults to false</li>
  *      <li>value (Object) - value to be displayed</li>
  * </ul>
  *
@@ -56,23 +56,21 @@ import java.io.Writer;
  * <pre>
  * <!-- START SNIPPET: example -->
  *
- * <s:push value="myBean">
+ * &lt;s:push value="myBean"&gt;
  *     <!-- Example 1: -->
- *     <s:property value="myBeanProperty" />
+ *     &lt;s:property value="myBeanProperty" /&gt;
  *
  *     <!-- Example 2: -->TextUtils
- *     <s:property value="myBeanProperty" default="a default value" />
- * </s:push>
+ *     &lt;s:property value="myBeanProperty" default="a default value" /&gt;
+ * &lt;/s:push&gt;
  *
  * <!-- END SNIPPET: example -->
  * </pre>
  *
  * <pre>
  * <!-- START SNIPPET: exampledescription -->
- *
  * Example 1 prints the result of myBean's getMyBeanProperty() method.
  * Example 2 prints the result of myBean's getMyBeanProperty() method and if it is null, print 'a default value' instead.
- *
  * <!-- END SNIPPET: exampledescription -->
  * </pre>
  *
@@ -89,7 +87,7 @@ import java.io.Writer;
 @StrutsTag(name="property", tldBodyContent="empty", tldTagClass="org.apache.struts2.views.jsp.PropertyTag",
     description="Print out expression which evaluates against the stack")
 public class Property extends Component {
-    private static final Logger LOG = LoggerFactory.getLogger(Property.class);
+    private static final Logger LOG = LogManager.getLogger(Property.class);
 
     public Property(ValueStack stack) {
         super(stack);
@@ -105,11 +103,6 @@ public class Property extends Component {
     @StrutsTagAttribute(description="The default value to be used if <u>value</u> attribute is null")
     public void setDefault(String defaultValue) {
         this.defaultValue = defaultValue;
-    }
-
-    @StrutsTagAttribute(description="Deprecated. Use 'escapeHtml'. Whether to escape HTML", type="Boolean", defaultValue="true")
-    public void setEscape(boolean escape) {
-        this.escapeHtml = escape;
     }
 
     @StrutsTagAttribute(description="Whether to escape HTML", type="Boolean", defaultValue="true")
@@ -165,9 +158,7 @@ public class Property extends Component {
                 writer.write(prepare(defaultValue));
             }
         } catch (IOException e) {
-            if (LOG.isInfoEnabled()) {
-        	LOG.info("Could not print out value '" + value + "'", e);
-            }
+            LOG.info("Could not print out value '{}'", value, e);
         }
 
         return result;

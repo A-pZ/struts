@@ -8,12 +8,12 @@
 </div>
 
 <div class="container-fluid">
-	<div class="row-fluid">
-		<div class="span12">
+	<div class="row">
+		<div class="col-md-12">
 
 			<p>You have come to this page because you used an <strong>method</strong> prefix.<p/>
 	
-			<p>The text you've enter is ${text?default('')?html}<p/>
+			<p>The text you've enter is ${text!''?html}<p/>
 
 			<@s.a href="javascript:history.back();" cssClass="btn btn-info"><i class="icon icon-arrow-left"></i> Back</@s.a>
 		</div>

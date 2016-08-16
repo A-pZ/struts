@@ -22,8 +22,8 @@
 package org.apache.struts2.components;
 
 import com.opensymphony.xwork2.util.ValueStack;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.struts2.util.MakeIterator;
 import org.apache.struts2.views.annotations.StrutsTag;
 import org.apache.struts2.views.annotations.StrutsTagAttribute;
@@ -38,7 +38,9 @@ import java.util.List;
  * <!-- START SNIPPET: javadoc -->
  *
  * <p>Iterator will iterate over a value. An iterable value can be any of: java.util.Collection, java.util.Iterator,
- * java.util.Enumeration, java.util.Map, or an array.</p> <p/> <!-- END SNIPPET: javadoc -->
+ * java.util.Enumeration, java.util.Map, or an array.</p>
+ *
+ * <!-- END SNIPPET: javadoc -->
  *
  * <!-- START SNIPPET: params -->
  *
@@ -96,12 +98,12 @@ import java.util.List;
  *   &lt;s:param name="day" value="'foo'"/&gt;
  *   &lt;s:param name="day" value="'bar'"/&gt;
  * &lt;/s:bean&gt;
- * <p/>
+ *
  * &lt;table border="0" cellspacing="0" cellpadding="1"&gt;
  * &lt;tr&gt;
  *   &lt;th&gt;Days of the week&lt;/th&gt;
  * &lt;/tr&gt;
- * <p/>
+ *
  * &lt;s:iterator value="#it.days" status="rowstatus"&gt;
  *   &lt;tr&gt;
  *     &lt;s:if test="#rowstatus.odd == true"&gt;
@@ -142,11 +144,10 @@ import java.util.List;
  *
  * <!-- END SNIPPET: example3code -->
  * </pre>
- * <p>
  *
  * <!-- START SNIPPET: example4description -->
  *
- * </p> The next example iterates over a an action collection and passes every iterator value to another action. The
+ * <p> The next example iterates over a an action collection and passes every iterator value to another action. The
  * trick here lies in the use of the '[0]' operator. It takes the current iterator value and passes it on to the edit
  * action. Using the '[0]' operator has the same effect as using &lt;s:property /&gt;. (The latter, however, does not
  * work from inside the param tag). </p>
@@ -172,7 +173,7 @@ import java.util.List;
  *
  * <!-- START SNIPPET: example5description -->
  *
- * </p>A loop that iterates 5 times
+ * <p>A loop that iterates 5 times</p>
  *
  * <!-- END SNIPPET: example5description -->
  *
@@ -189,10 +190,10 @@ import java.util.List;
  *
  * <!-- START SNIPPET: example6description -->
  *
- * </p>Another way to create a simple loop, similar to JSTL's 
+ * <p>Another way to create a simple loop, similar to JSTL's
  * &lt;c:forEach begin="..." end="..." ...&gt; is to use some 
  * OGNL magic, which provides some under-the-covers magic to 
- * make 0-n loops trivial. This example also loops five times.
+ * make 0-n loops trivial. This example also loops five times.</p>
  *
  * <!-- END SNIPPET: example6description -->
  *
@@ -208,7 +209,7 @@ import java.util.List;
  *
  *  <!-- START SNIPPET: example7description -->
  *
- * </p>A loop that iterates over a partial list
+ * <p>A loop that iterates over a partial list</p>
  *
  * <!-- END SNIPPET: example7description -->
  *
@@ -225,7 +226,7 @@ import java.util.List;
  */
 @StrutsTag(name="iterator", tldTagClass="org.apache.struts2.views.jsp.IteratorTag", description="Iterate over a iterable value")
 public class IteratorComponent extends ContextBean {
-    private static final Logger LOG = LoggerFactory.getLogger(IteratorComponent.class);
+    private static final Logger LOG = LogManager.getLogger(IteratorComponent.class);
 
     protected Iterator iterator;
     protected IteratorStatus status;
@@ -276,7 +277,7 @@ public class IteratorComponent extends ContextBean {
             if (iterator == null) {
                 //classic for loop from 'begin' to 'end'
                 iterator = new CounterIterator(begin, end, step, null);
-            } else if (iterator != null) {
+            } else {
                 //only arrays and lists are supported
                 if (iteratorTarget.getClass().isArray()) {
                     Object[] values = (Object[]) iteratorTarget;
@@ -303,9 +304,7 @@ public class IteratorComponent extends ContextBean {
 
             String var = getVar();
 
-            if ((var != null) && (currentValue != null)) {
-                //pageContext.setAttribute(id, currentValue);
-                //pageContext.setAttribute(id, currentValue, PageContext.REQUEST_SCOPE);
+            if ((var != null)) {
                 putInContext(currentValue);
             }
 

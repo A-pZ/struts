@@ -1,13 +1,14 @@
 <%@ taglib prefix="s" uri="/struts-tags" %>
-<H2>Welcome to the Struts data table portlet</H2>
-<p/>
+<h2>Welcome to the Struts data table portlet</h2>
+<p>
 This a simple table showing the database data:
+</p>
 <table>
  <tr>
   <th>Name</th>
   <th>Value</th>
  </tr>
- <s:iterator id="row" value="%{data}">
+ <s:iterator var="row" value="%{data}">
  <tr>
   <td><s:property value="%{STR_COL}" /></td>
   <td><s:property value="%{NUM_COL}" /></td>

@@ -24,10 +24,10 @@ package org.apache.struts2.json;
 import com.opensymphony.xwork2.Action;
 import com.opensymphony.xwork2.ActionInvocation;
 import com.opensymphony.xwork2.ModelDriven;
-import com.opensymphony.xwork2.ValidationAware;
+import com.opensymphony.xwork2.interceptor.ValidationAware;
 import com.opensymphony.xwork2.interceptor.MethodFilterInterceptor;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.struts2.ServletActionContext;
 
@@ -61,6 +61,8 @@ import java.util.Map;
  * <p>If the request has a parameter 'struts.validateOnly' execution will return after
  * validation (action won't be executed).</p>
  *
+ * <p>If 'struts.validateOnly' is set to false you may want to use {@link JSONActionRedirectResult}.</p>
+ *
  * <p>A request parameter named 'struts.enableJSONValidation' must be set to 'true' to
  * use this interceptor</p>
  *
@@ -70,19 +72,20 @@ import java.util.Map;
  */
 public class JSONValidationInterceptor extends MethodFilterInterceptor {
 
-    private static final Logger LOG = LoggerFactory.getLogger(JSONValidationInterceptor.class);
+    private static final Logger LOG = LogManager.getLogger(JSONValidationInterceptor.class);
 
-    private static final String VALIDATE_ONLY_PARAM = "struts.validateOnly";
-    private static final String VALIDATE_JSON_PARAM = "struts.enableJSONValidation";
-    private static final String NO_ENCODING_SET_PARAM = "struts.JSONValidation.no.encoding";
+    public static final String VALIDATE_ONLY_PARAM = "struts.validateOnly";
+    public static final String VALIDATE_JSON_PARAM = "struts.enableJSONValidation";
+    public static final String NO_ENCODING_SET_PARAM = "struts.JSONValidation.no.encoding";
 
-    private static final String DEFAULT_ENCODING = "UTF-8";
+    public static final String DEFAULT_ENCODING = "UTF-8";
 
     private int validationFailedStatus = -1;
 
     /**
      * HTTP status that will be set in the response if validation fails
-     * @param validationFailedStatus
+     *
+     * @param validationFailedStatus validation failed status
      */
     public void setValidationFailedStatus(int validationFailedStatus) {
         this.validationFailedStatus = validationFailedStatus;
@@ -153,6 +156,7 @@ public class JSONValidationInterceptor extends MethodFilterInterceptor {
     }
 
     /**
+     * @param validationAware the validation aware object
      * @return JSON string that contains the errors and field errors
      */
     @SuppressWarnings("unchecked")

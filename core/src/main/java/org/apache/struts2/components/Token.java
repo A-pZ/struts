@@ -33,14 +33,15 @@ import com.opensymphony.xwork2.util.ValueStack;
 
 /**
  * <!-- START SNIPPET: javadoc -->
- * Stop double-submission of forms.</p>
+ * <p>Stop double-submission of forms.</p>
  *
+ * <p>
  * The token tag is used to help with the "double click" submission problem. It is needed if you are using the
  * TokenInterceptor or the TokenSessionInterceptor. The s:token tag merely places a hidden element that contains
  * the unique token.</p>
  * <!-- END SNIPPET: javadoc -->
  *
- * <p/> <b>Examples</b>
+ * <p><b>Examples</b></p>
  *
  * <pre>
  * <!-- START SNIPPET: example -->
@@ -96,14 +97,6 @@ public class Token extends UIBean {
         String token = buildToken(tokenName);
         addParameter("token", token);
         addParameter("tokenNameField", TokenHelper.TOKEN_NAME_FIELD);
-    }
-
-    /**
-     * This will be removed in a future version of Struts.
-     * @deprecated Templates should use $parameters from now on, not $tag.
-     */
-    public String getTokenNameField() {
-        return TokenHelper.TOKEN_NAME_FIELD;
     }
 
     private String buildToken(String name) {

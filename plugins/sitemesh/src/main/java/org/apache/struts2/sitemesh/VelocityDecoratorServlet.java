@@ -28,66 +28,78 @@ package org.apache.struts2.sitemesh;
 import com.opensymphony.module.sitemesh.*;
 import com.opensymphony.module.sitemesh.util.OutputConverter;
 import com.opensymphony.xwork2.ActionContext;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.struts2.ServletActionContext;
 import org.apache.struts2.StrutsStatics;
 import org.apache.struts2.dispatcher.Dispatcher;
-import org.apache.struts2.dispatcher.ng.listener.StrutsListener;
+import org.apache.struts2.dispatcher.listener.StrutsListener;
 import org.apache.struts2.views.velocity.VelocityManager;
 import org.apache.velocity.Template;
 import org.apache.velocity.context.Context;
 import org.apache.velocity.runtime.RuntimeConstants;
-import org.apache.velocity.tools.view.servlet.VelocityViewServlet;
+import org.apache.velocity.tools.view.VelocityView;
+import org.apache.velocity.tools.view.VelocityViewServlet;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import java.io.IOException;
 import java.io.StringWriter;
 
 /**
  * <p>This is a SiteMesh Velocity view servlet.</p>
- * <p/>
+ *
  * <p>It overrides the SiteMesh servlet to rely on the
  * Velocity Manager in Struts instead of creating it's
  * own manager</p>
  */
 public class VelocityDecoratorServlet extends VelocityViewServlet {
 
+    private static final Logger LOG = LogManager.getLogger(VelocityDecoratorServlet.class);
+            
+    private static final long serialVersionUID = -6731485159371716918L;
+    
     protected VelocityManager velocityManager;
     protected String defaultContentType;
 
     /**
      * <p>Initializes servlet, toolbox and Velocity template engine.
      * Called by the servlet container on loading.</p>
-     * <p/>
+     *
      * <p>NOTE: If no charset is specified in the default.contentType
      * property (in your velocity.properties) and you have specified
      * an output.encoding property, then that will be used as the
      * charset for the default content-type of pages served by this
      * servlet.</p>
      *
-     * @param config servlet configuation
+     * @param config servlet configuration
      */
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
         Dispatcher dispatcher = (Dispatcher) getServletContext().getAttribute(StrutsStatics.SERVLET_DISPATCHER);
-        if (dispatcher == null)
+        if (dispatcher == null) {
             throw new IllegalStateException("Unable to find the Dispatcher in the Servlet Context. Is '" + StrutsListener.class.getName() + "' missing in web.xml?");
+        }
         velocityManager = dispatcher.getContainer().getInstance(VelocityManager.class);
         velocityManager.init(config.getServletContext());
 
         // do whatever we have to do to init Velocity
-        setVelocityEngine(velocityManager.getVelocityEngine());
-        toolboxManager = velocityManager.getToolboxManager();
+        getVelocityView().setVelocityEngine(velocityManager.getVelocityEngine());
+        // toolboxManager = velocityManager.getToolboxManager();
 
+        
         // we can get these now that velocity is initialized
-        defaultContentType = (String) getVelocityProperty(CONTENT_TYPE, DEFAULT_CONTENT_TYPE);
+        defaultContentType = getVelocityProperty(VelocityView.CONTENT_TYPE_KEY, VelocityView.DEFAULT_CONTENT_TYPE);
 
-        String encoding = (String) getVelocityProperty(RuntimeConstants.OUTPUT_ENCODING, DEFAULT_OUTPUT_ENCODING);
+        String encoding = getVelocityProperty(RuntimeConstants.OUTPUT_ENCODING, VelocityView.DEFAULT_OUTPUT_ENCODING);
 
         // For non Latin-1 encodings, ensure that the charset is
         // included in the Content-Type header.
-        if (!DEFAULT_OUTPUT_ENCODING.equalsIgnoreCase(encoding)) {
+        if (!VelocityView.DEFAULT_OUTPUT_ENCODING.equalsIgnoreCase(encoding)) {
             int index = defaultContentType.lastIndexOf("charset");
             if (index < 0) {
                 // the charset specifier is not yet present in header.
@@ -95,19 +107,19 @@ public class VelocityDecoratorServlet extends VelocityViewServlet {
                 defaultContentType += "; charset=" + encoding;
             } else {
                 // The user may have configuration issues.
-                getVelocityEngine().warn("VelocityViewServlet: Charset was already " + "specified in the Content-Type property.  " + "Output encoding property will be ignored.");
+                getVelocityView().getVelocityEngine().getLog().warn("VelocityViewServlet: Charset was already " + "specified in the Content-Type property.  " + "Output encoding property will be ignored.");
             }
         }
 
-        getVelocityEngine().info("VelocityViewServlet: Default content-type is: " + defaultContentType);
+        getVelocityView().getVelocityEngine().getLog().info("VelocityViewServlet: Default content-type is: " + defaultContentType);
     }
 
-    public Template handleRequest(HttpServletRequest request, HttpServletResponse response, Context context) throws Exception {
+    public Template handleRequest(HttpServletRequest request, HttpServletResponse response, Context context) {
         HTMLPage htmlPage = (HTMLPage) request.getAttribute(RequestConstants.PAGE);
         String template;
 
         context.put("base", request.getContextPath());
-        // For backwards compatability with apps that used the old VelocityDecoratorServlet
+        // For backwards compatibility with apps that used the old VelocityDecoratorServlet
         // that extended VelocityServlet instead of VelocityViewServlet
         context.put("req", request);
         context.put("res", response);
@@ -118,16 +130,20 @@ public class VelocityDecoratorServlet extends VelocityViewServlet {
             context.put("head", "<!-- head -->");
             template = request.getServletPath();
         } else {
-            context.put("title", OutputConverter.convert(htmlPage.getTitle()));
-            {
-                StringWriter buffer = new StringWriter();
-                htmlPage.writeBody(OutputConverter.getWriter(buffer));
-                context.put("body", buffer.toString());
-            }
-            {
-                StringWriter buffer = new StringWriter();
-                htmlPage.writeHead(OutputConverter.getWriter(buffer));
-                context.put("head", buffer.toString());
+            try {
+                context.put("title", OutputConverter.convert(htmlPage.getTitle()));
+                {
+                    StringWriter buffer = new StringWriter();
+                    htmlPage.writeBody(OutputConverter.getWriter(buffer));
+                    context.put("body", buffer.toString());
+                }
+                {
+                    StringWriter buffer = new StringWriter();
+                    htmlPage.writeHead(OutputConverter.getWriter(buffer));
+                    context.put("head", buffer.toString());
+                }
+            } catch (IOException e) {
+                LOG.error("IOException handle request template", e);
             }
             context.put("page", htmlPage);
             DecoratorMapper decoratorMapper = getDecoratorMapper();
@@ -140,8 +156,7 @@ public class VelocityDecoratorServlet extends VelocityViewServlet {
 
     private DecoratorMapper getDecoratorMapper() {
         Factory factory = Factory.getInstance(new Config(getServletConfig()));
-        DecoratorMapper decoratorMapper = factory.getDecoratorMapper();
-        return decoratorMapper;
+        return factory.getDecoratorMapper();
     }
 
     /**
@@ -160,15 +175,17 @@ public class VelocityDecoratorServlet extends VelocityViewServlet {
     }
 
     /**
-     * Sets the content type of the response.  This is available to be overriden
+     * <p>
+     * Sets the content type of the response.  This is available to be overridden
      * by a derived class.
-     * <p/>
-     * <p>The default implementation is :
+     * </p>
+     * <p>The default implementation is:</p>
      * <pre>
-     * <p/>
+     *
      *    response.setContentType(defaultContentType);
-     * <p/>
+     *
      * </pre>
+     * <p>
      * where defaultContentType is set to the value of the default.contentType
      * property, or "text/html" if that is not set.</p>
      *

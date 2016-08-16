@@ -22,9 +22,9 @@
 package org.apache.struts2.components;
 
 import com.opensymphony.xwork2.util.ValueStack;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.struts2.util.TextProviderHelper;
 import org.apache.struts2.views.annotations.StrutsTag;
 import org.apache.struts2.views.annotations.StrutsTagAttribute;
@@ -37,26 +37,25 @@ import java.util.List;
 
 /**
  * <!-- START SNIPPET: javadoc -->
+ * <p>
  * Render a I18n text message.
+ * </p>
  *
- * <p/>
- *
+ * <p>
  * The message must be in a resource bundle
  * with the same name as the action that it is associated with. In practice
  * this means that you should create a properties file in the same package
  * as your Java class with the same name as your class, but with .properties
  * extension.
+ * </p>
  *
- * <p/>
- *
+ * <p>
  * If the named message is not found in a property file, then the body of the
  * tag will be used as default message. If no body is used, then the stack will
  * be searched, and if a value is returned, it will written to the output.
  * If no value is found on the stack, the key of the message will be written out.
- *
+ * </p>
  * <!-- END SNIPPET: javadoc -->
- *
- *
  *
  * <!-- START SNIPPET: params -->
  *
@@ -66,16 +65,13 @@ import java.util.List;
  *
  * <!-- END SNIPPET: params -->
  *
- * <p/>
- *
+ * <p>
  * Example:
- * <pre>
+ * </p>
+ *
  * <!-- START SNIPPET: exdescription -->
- *
- * Accessing messages from a given bundle (the i18n Shop example bundle in the first example) and using bundle defined through the framework in the second example.</p>
- *
+ * <p>Accessing messages from a given bundle (the i18n Shop example bundle in the first example) and using bundle defined through the framework in the second example.</p>
  * <!-- END SNIPPET: exdescription -->
- * </pre>
  *
  * <pre>
  * <!-- START SNIPPET: example -->
@@ -119,7 +115,7 @@ import java.util.List;
     tldTagClass="org.apache.struts2.views.jsp.TextTag",
     description="Render a I18n text message")
 public class Text extends ContextBean implements Param.UnnamedParametric {
-    private static final Logger LOG = LoggerFactory.getLogger(Text.class);
+    private static final Logger LOG = LogManager.getLogger(Text.class);
 
     protected List values = Collections.EMPTY_LIST;
     protected String actualName;
@@ -130,7 +126,7 @@ public class Text extends ContextBean implements Param.UnnamedParametric {
         super(stack);
     }
 
-    @StrutsTagAttribute(description=" Name of resource property to fetch", required=true)
+    @StrutsTagAttribute(description = "Name of resource property to fetch", required = true)
     public void setName(String name) {
         this.name = name;
     }

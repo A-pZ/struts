@@ -22,8 +22,8 @@
 package org.apache.struts2.views.jsp;
 
 import com.opensymphony.xwork2.ActionContext;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.struts2.ServletActionContext;
 import org.apache.struts2.views.jsp.ui.AbstractUITag;
@@ -38,7 +38,7 @@ import java.util.*;
  */
 public abstract class AbstractUITagTest extends AbstractTagTest {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AbstractUITagTest.class);
+    private static final Logger LOG = LogManager.getLogger(AbstractUITagTest.class);
 
     static final String FREEMARKER_ERROR_EXPECTATION = "Java backtrace for programmers:";
 
@@ -106,31 +106,9 @@ public abstract class AbstractUITagTest extends AbstractTagTest {
     }
 
     /**
-     * Simple Helper for setting bean properties. Although BeanUtils from oscore should provide bean property setting
-     * functionality, it does not work (at least with my JDK 1.5.0_05), failing in jdk's PropertyDescriptor constructor.
-     * This implementation works safely in any case, and does not add dependency on commons-beanutils for building.
-     * TODO: Check how we can remove this crap again.
-     *
-     * @author <a href="mailto:gielen@it-neering.net">Rene Gielen</a>
-     * @deprecated use BeanUtils#setProperty
-     */
-    public class BeanHelper {
-        Object bean;
-
-        public BeanHelper(Object bean) {
-            this.bean = bean;
-        }
-
-        public void set(String name, Object value) throws IllegalAccessException, InvocationTargetException {
-            BeanUtils.setProperty(this.bean, name, value);
-        }
-
-    }
-
-    /**
      * Initialize a map of {@link PropertyHolder} for generic tag property testing. Will be used when calling {@link
      * #verifyGenericProperties(org.apache.struts2.views.jsp.ui.AbstractUITag, String, String[])} as properties to
-     * verify.<p/> This implementation defines testdata for all common AbstractUITag properties and may be overridden in
+     * verify.<br> This implementation defines testdata for all common AbstractUITag properties and may be overridden in
      * subclasses.
      *
      * @return A Map of PropertyHolders values bound to {@link org.apache.struts2.views.jsp.AbstractUITagTest.PropertyHolder#getName()}
@@ -198,9 +176,7 @@ public abstract class AbstractUITagTest extends AbstractTagTest {
             tag.doStartTag();
             tag.doEndTag();
             String writerString = normalize(writer.toString(), true);
-            if (LOG.isInfoEnabled()) {
-                LOG.info("AbstractUITagTest - [verifyGenericProperties]: Tag output is " + writerString);
-            }
+            LOG.debug("AbstractUITagTest - [verifyGenericProperties]: Tag output is {}", writerString);
 
             assertFalse("Freemarker error detected in tag output: " + writerString, writerString.contains(normalize(FREEMARKER_ERROR_EXPECTATION)));
 
@@ -251,15 +227,14 @@ public abstract class AbstractUITagTest extends AbstractTagTest {
         }
 
         StringBuilder buffer = new StringBuilder(128);
-        InputStream in = url.openStream();
-        byte[] buf = new byte[4096];
-        int nbytes;
-
-        while ((nbytes = in.read(buf)) > 0) {
-            buffer.append(new String(buf, 0, nbytes));
+        try (InputStream in = url.openStream()) {
+	        byte[] buf = new byte[4096];
+	        int nbytes;
+	
+	        while ((nbytes = in.read(buf)) > 0) {
+	            buffer.append(new String(buf, 0, nbytes));
+	        }
         }
-
-        in.close();
 
         /**
          * compare the trimmed values of each buffer and make sure they're equivalent.  however, let's make sure to

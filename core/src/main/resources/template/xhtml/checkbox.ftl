@@ -28,7 +28,7 @@
  errorFor="${parameters.id}"<#rt/>
 </#if>
 >
-    <td align="left" valign="top" colspan="2"><#rt/>
+    <td class="tdCheckboxErrorMessage" colspan="2"><#rt/>
         <span class="errorMessage">${error?html}</span><#t/>
     </td><#lt/>
 </tr>
@@ -39,7 +39,7 @@
 <#elseif parameters.labelposition??>
 <#assign labelpos = parameters.labelposition/>
 </#if>
-<#if labelpos?default("") == 'top'>
+<#if (labelpos!"") == 'top'>
 <tr>
     <td colspan="2">
 <#if parameters.label??> <label<#t/>
@@ -52,11 +52,11 @@
  class="checkboxLabel"<#rt/>
 </#if>
 >
-<#if parameters.required?default(false) && parameters.requiredPosition?default("right") != 'right'>
+<#if parameters.required!false && parameters.requiredPosition!"right" != 'right'>
         <span class="required">*</span><#t/>
 </#if>
 ${parameters.label?html}<#t/>
-<#if parameters.required?default(false) && parameters.requiredPosition?default("right") == 'right'>
+<#if parameters.required!false && parameters.requiredPosition!"right" == 'right'>
  <span class="required">*</span><#t/>
 </#if>
 :<#t/>
@@ -72,8 +72,8 @@ ${parameters.label?html}<#t/>
         <#include "/${parameters.templateDir}/simple/checkbox.ftl" />
 <#else>
 <tr>
-	<td valign="top" align="right">
-<#if labelpos?default("") == 'left'>
+	<td class="tdCheckboxLabel">
+<#if (labelpos!"") == 'left'>
 <#if parameters.label??> <label<#t/>
 <#if parameters.id??>
  for="${parameters.id?html}"<#rt/>
@@ -84,11 +84,11 @@ ${parameters.label?html}<#t/>
  class="checkboxLabel"<#rt/>
 </#if>
 >
-<#if parameters.required?default(false) && parameters.requiredPosition?default("right") != 'right'>
+<#if parameters.required!false && parameters.requiredPosition!"right" != 'right'>
         <span class="required">*</span><#t/>
 </#if>
 ${parameters.label?html}<#t/>
-<#if parameters.required?default(false) && parameters.requiredPosition?default("right") == 'right'>
+<#if parameters.required!false && parameters.requiredPosition!"right" == 'right'>
  <span class="required">*</span><#t/>
 </#if>
 :<#t/>
@@ -98,8 +98,8 @@ ${parameters.label?html}<#t/>
 </label><#t/>
 </#if>
 </#if>
-<#if labelpos?default("") == 'right'>
-    <#if parameters.required?default(false)>
+<#if (labelpos!"") == 'right'>
+    <#if parameters.required!false>
         <span class="required">*</span><#t/>
     </#if>
     <#if parameters.tooltip??>
@@ -107,12 +107,12 @@ ${parameters.label?html}<#t/>
     </#if>
 </#if>
     </td>
-    <td valign="top" align="left">
+    <td class="tdCheckboxInput">
 
-<#if labelpos?default("") != 'top'>
-                	<#include "/${parameters.templateDir}/simple/checkbox.ftl" />
+<#if (labelpos!"") != 'top'>
+ <#include "/${parameters.templateDir}/simple/checkbox.ftl" />
 </#if>                    
-<#if labelpos?default("") != 'top' && labelpos?default("") != 'left'>
+<#if (labelpos!"") != 'top' && (labelpos!"") != 'left'>
 <#if parameters.label??> <label<#t/>
 <#if parameters.id??>
  for="${parameters.id?html}"<#rt/>

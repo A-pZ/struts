@@ -56,8 +56,8 @@ import com.opensymphony.xwork2.util.PatternMatcher;
 import com.opensymphony.xwork2.util.TextParser;
 import com.opensymphony.xwork2.util.ValueStackFactory;
 import com.opensymphony.xwork2.util.location.LocatableProperties;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import com.opensymphony.xwork2.util.reflection.ReflectionContextFactory;
 import com.opensymphony.xwork2.util.reflection.ReflectionProvider;
 import com.opensymphony.xwork2.validator.ActionValidatorManager;
@@ -84,7 +84,7 @@ import java.util.StringTokenizer;
  * The following is a list of the allowed extension points:
  *
  * <!-- START SNIPPET: extensionPoints -->
- * <table border="1">
+ * <table border="1" summary="">
  *   <tr>
  *     <th>Type</th>
  *     <th>Property</th>
@@ -289,7 +289,7 @@ import java.util.StringTokenizer;
  *     <td>com.opensymphony.xwork2.conversion.ConversionPropertiesProcessor</td>
  *     <td>struts.converter.file.processor</td>
  *     <td>singleton</td>
- *     <td>Process <class>-conversion.properties file create converters</class></td>
+ *     <td>Process &lt;class&gt;-conversion.properties file create converters&lt;/class&gt;</td>
  *   </tr>
  *   <tr>
  *     <td>com.opensymphony.xwork2.conversion.ConversionAnnotationProcessor</td>
@@ -337,19 +337,22 @@ import java.util.StringTokenizer;
  * </table>
  *
  * <!-- END SNIPPET: extensionPoints -->
- * </p>
+ *
  * <p>
  * Implementations are selected using the value of its associated property.  That property is
  * used to determine the implementation by:
  * </p>
+ *
  * <ol>
  *   <li>Trying to find an existing bean by that name in the container</li>
  *   <li>Trying to find a class by that name, then creating a new bean factory for it</li>
  *   <li>Creating a new delegation bean factory that delegates to the configured ObjectFactory at runtime</li>
  * </ol>
+ *
  * <p>
  * Finally, this class overrides certain properties if dev mode is enabled:
  * </p>
+ *
  * <ul>
  *   <li><code>struts.i18n.reload = true</code></li>
  *   <li><code>struts.configuration.xml.reload = true</code></li>
@@ -357,7 +360,7 @@ import java.util.StringTokenizer;
  */
 public class DefaultBeanSelectionProvider extends AbstractBeanSelectionProvider {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DefaultBeanSelectionProvider.class);
+    private static final Logger LOG = LogManager.getLogger(DefaultBeanSelectionProvider.class);
 
     public void register(ContainerBuilder builder, LocatableProperties props) {
         alias(ObjectFactory.class, StrutsConstants.STRUTS_OBJECTFACTORY, builder, props);
@@ -383,13 +386,13 @@ public class DefaultBeanSelectionProvider extends AbstractBeanSelectionProvider 
         alias(TypeConverterCreator.class, StrutsConstants.STRUTS_CONVERTER_CREATOR, builder, props);
         alias(TypeConverterHolder.class, StrutsConstants.STRUTS_CONVERTER_HOLDER, builder, props);
 
-        alias(TextProvider.class, StrutsConstants.STRUTS_XWORKTEXTPROVIDER, builder, props, Scope.DEFAULT);
+        alias(TextProvider.class, StrutsConstants.STRUTS_XWORKTEXTPROVIDER, builder, props, Scope.PROTOTYPE);
 
         alias(LocaleProvider.class, StrutsConstants.STRUTS_LOCALE_PROVIDER, builder, props);
         alias(ActionProxyFactory.class, StrutsConstants.STRUTS_ACTIONPROXYFACTORY, builder, props);
         alias(ObjectTypeDeterminer.class, StrutsConstants.STRUTS_OBJECTTYPEDETERMINER, builder, props);
         alias(ActionMapper.class, StrutsConstants.STRUTS_MAPPER_CLASS, builder, props);
-        alias(MultiPartRequest.class, StrutsConstants.STRUTS_MULTIPART_PARSER, builder, props, Scope.DEFAULT);
+        alias(MultiPartRequest.class, StrutsConstants.STRUTS_MULTIPART_PARSER, builder, props, Scope.PROTOTYPE);
         alias(FreemarkerManager.class, StrutsConstants.STRUTS_FREEMARKER_MANAGER_CLASSNAME, builder, props);
         alias(VelocityManager.class, StrutsConstants.STRUTS_VELOCITY_MANAGER_CLASSNAME, builder, props);
         alias(UrlRenderer.class, StrutsConstants.STRUTS_URL_RENDERER, builder, props);
@@ -407,9 +410,9 @@ public class DefaultBeanSelectionProvider extends AbstractBeanSelectionProvider 
 
         alias(DispatcherErrorHandler.class, StrutsConstants.STRUTS_DISPATCHER_ERROR_HANDLER, builder, props);
 
-        /** Checker is used mostly in interceptors, so there be one instance of checker per interceptor with Scope.DEFAULT **/
-        alias(ExcludedPatternsChecker.class, StrutsConstants.STRUTS_EXCLUDED_PATTERNS_CHECKER, builder, props, Scope.DEFAULT);
-        alias(AcceptedPatternsChecker.class, StrutsConstants.STRUTS_ACCEPTED_PATTERNS_CHECKER, builder, props, Scope.DEFAULT);
+        /** Checker is used mostly in interceptors, so there be one instance of checker per interceptor with Scope.PROTOTYPE **/
+        alias(ExcludedPatternsChecker.class, StrutsConstants.STRUTS_EXCLUDED_PATTERNS_CHECKER, builder, props, Scope.PROTOTYPE);
+        alias(AcceptedPatternsChecker.class, StrutsConstants.STRUTS_ACCEPTED_PATTERNS_CHECKER, builder, props, Scope.PROTOTYPE);
 
         switchDevMode(props);
 
@@ -422,6 +425,7 @@ public class DefaultBeanSelectionProvider extends AbstractBeanSelectionProvider 
 
         convertIfExist(props, StrutsConstants.STRUTS_EXCLUDED_CLASSES, XWorkConstants.OGNL_EXCLUDED_CLASSES);
         convertIfExist(props, StrutsConstants.STRUTS_EXCLUDED_PACKAGE_NAME_PATTERNS, XWorkConstants.OGNL_EXCLUDED_PACKAGE_NAME_PATTERNS);
+        convertIfExist(props, StrutsConstants.STRUTS_EXCLUDED_PACKAGE_NAMES, XWorkConstants.OGNL_EXCLUDED_PACKAGE_NAMES);
 
         convertIfExist(props, StrutsConstants.STRUTS_ADDITIONAL_EXCLUDED_PATTERNS, XWorkConstants.ADDITIONAL_EXCLUDED_PATTERNS);
         convertIfExist(props, StrutsConstants.STRUTS_ADDITIONAL_ACCEPTED_PATTERNS, XWorkConstants.ADDITIONAL_ACCEPTED_PATTERNS);
@@ -445,9 +449,6 @@ public class DefaultBeanSelectionProvider extends AbstractBeanSelectionProvider 
             if (props.getProperty(StrutsConstants.STRUTS_CONFIGURATION_XML_RELOAD) == null) {
                 props.setProperty(StrutsConstants.STRUTS_CONFIGURATION_XML_RELOAD, "true");
             }
-            if (props.getProperty(StrutsConstants.STRUTS_FREEMARKER_TEMPLATES_CACHE) == null) {
-                props.setProperty(StrutsConstants.STRUTS_FREEMARKER_TEMPLATES_CACHE, "false");
-            }
             if (props.getProperty(StrutsConstants.STRUTS_FREEMARKER_TEMPLATES_CACHE_UPDATE_DELAY) == null) {
                 props.setProperty(StrutsConstants.STRUTS_FREEMARKER_TEMPLATES_CACHE_UPDATE_DELAY, "0");
             }
@@ -466,12 +467,10 @@ public class DefaultBeanSelectionProvider extends AbstractBeanSelectionProvider 
             while (customBundles.hasMoreTokens()) {
                 String name = customBundles.nextToken();
                 try {
-                    if (LOG.isInfoEnabled()) {
-                	    LOG.info("Loading global messages from [#0]", name);
-                    }
+              	    LOG.trace("Loading global messages from [{}]", name);
                     LocalizedTextUtil.addDefaultResourceBundle(name);
                 } catch (Exception e) {
-                    LOG.error("Could not find messages file #0.properties. Skipping", name);
+                    LOG.error("Could not find messages file {}.properties. Skipping", name);
                 }
             }
         }

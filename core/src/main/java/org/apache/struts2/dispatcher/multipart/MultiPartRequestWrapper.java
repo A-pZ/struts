@@ -21,44 +21,44 @@
 
 package org.apache.struts2.dispatcher.multipart;
 
-import com.opensymphony.xwork2.DefaultLocaleProvider;
 import com.opensymphony.xwork2.LocaleProvider;
 import com.opensymphony.xwork2.util.LocalizedTextUtil;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.struts2.dispatcher.StrutsRequestWrapper;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Vector;
+import java.util.*;
 
 
 /**
+ * <p>
  * Parse a multipart request and provide a wrapper around the request. The parsing implementation used
  * depends on the <tt>struts.multipart.parser</tt> setting. It should be set to a class which
- * extends {@link org.apache.struts2.dispatcher.multipart.MultiPartRequest}. 
- * <p/>
+ * extends {@link org.apache.struts2.dispatcher.multipart.MultiPartRequest}.
+ * </p>
+ *
+ * <p>
  * The <tt>struts.multipart.parser</tt> property should be set to <tt>jakarta</tt> for the
  * Jakarta implementation, <tt>pell</tt> for the Pell implementation and <tt>cos</tt> for the Jason Hunter
  * implementation.
- * <p/>
+ * </p>
+ *
+ * <p>
  * The files are uploaded when the object is instantiated. If there are any errors they are logged using
  * {@link #addError(String)}. An action handling a multipart form should first check {@link #hasErrors()}
  * before doing any other processing.
- * <p/>
- * An alternate implementation, PellMultiPartRequest, is provided as a plugin.
+ * </p>
  *
+ * <p>
+ * An alternate implementation, PellMultiPartRequest, is provided as a plugin.
+ * </p>
  */
 public class MultiPartRequestWrapper extends StrutsRequestWrapper {
 
-    protected static final Logger LOG = LoggerFactory.getLogger(MultiPartRequestWrapper.class);
+    protected static final Logger LOG = LogManager.getLogger(MultiPartRequestWrapper.class);
 
     private Collection<String> errors;
     private MultiPartRequest multi;
@@ -70,13 +70,14 @@ public class MultiPartRequestWrapper extends StrutsRequestWrapper {
      * @param multiPartRequest Our MultiPartRequest object
      * @param request Our HttpServletRequest object
      * @param saveDir Target directory for any files that we save
-     * @param provider
+     * @param provider locale provider
+     * @param disableRequestAttributeValueStackLookup disable the request attribute value stack lookup
      */
     public MultiPartRequestWrapper(MultiPartRequest multiPartRequest, HttpServletRequest request,
                                    String saveDir, LocaleProvider provider,
                                    boolean disableRequestAttributeValueStackLookup) {
         super(request, disableRequestAttributeValueStackLookup);
-        errors = new ArrayList<String>();
+        errors = new ArrayList<>();
         multi = multiPartRequest;
         defaultLocale = provider.getLocale();
         setLocale(request);
@@ -86,9 +87,7 @@ public class MultiPartRequestWrapper extends StrutsRequestWrapper {
                 addError(error);
             }
         } catch (IOException e) {
-            if (LOG.isWarnEnabled()) {
-                LOG.warn(e.getMessage(), e);
-            }
+            LOG.warn(e.getMessage(), e);
             addError(buildErrorMessage(e, new Object[] {e.getMessage()}));
         } 
     }
@@ -105,9 +104,7 @@ public class MultiPartRequestWrapper extends StrutsRequestWrapper {
 
     protected String buildErrorMessage(Throwable e, Object[] args) {
         String errorKey = "struts.messages.upload.error." + e.getClass().getSimpleName();
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Preparing error message for key: [#0]", errorKey);
-        }
+        LOG.debug("Preparing error message for key: [{}]", errorKey);
         return LocalizedTextUtil.findText(this.getClass(), errorKey, defaultLocale, e.getMessage(), args);
     }
 
@@ -194,7 +191,7 @@ public class MultiPartRequestWrapper extends StrutsRequestWrapper {
      * @see javax.servlet.http.HttpServletRequest#getParameterMap()
      */
     public Map getParameterMap() {
-        Map<String, String[]> map = new HashMap<String, String[]>();
+        Map<String, String[]> map = new HashMap<>();
         Enumeration enumeration = getParameterNames();
 
         while (enumeration.hasMoreElements()) {

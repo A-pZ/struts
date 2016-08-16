@@ -39,7 +39,7 @@ import java.util.List;
  *
  * <!-- END SNIPPET: javadoc -->
  *
- * <p/> <b>Examples</b>
+ * <p><b>Examples</b></p>
  *
  * <pre>
  * <!-- START SNIPPET: example -->
@@ -74,14 +74,13 @@ import java.util.List;
  * </pre>
  *
  *
- * <p/> <b>Description</b><p/>
- *
+ * <p><b>Description</b></p>
  *
  * <pre>
  * <!-- START SNIPPET: description -->
  *
- * Example 1: display all field errors<p/>
- * Example 2: display field errors only for 'field1' and 'field2'<p/>
+ * Example 1: display all field errors<br>
+ * Example 2: display field errors only for 'field1' and 'field2'<br>
  *
  * <!-- END SNIPPET: description -->
  * </pre>
@@ -91,7 +90,7 @@ import java.util.List;
                 "or partial depending on param tag nested)if they exists")
 public class FieldError extends UIBean implements UnnamedParametric {
 
-    private List<String> errorFieldNames = new ArrayList<String>();
+    private List<String> errorFieldNames = new ArrayList<>();
     private boolean escape = true;
 
     public FieldError(ValueStack stack, HttpServletRequest request, HttpServletResponse response) {

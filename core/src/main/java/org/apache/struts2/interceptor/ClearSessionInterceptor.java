@@ -21,29 +21,28 @@
 
 package org.apache.struts2.interceptor;
 
-import java.util.Map;
-
 import com.opensymphony.xwork2.ActionContext;
 import com.opensymphony.xwork2.ActionInvocation;
 import com.opensymphony.xwork2.interceptor.AbstractInterceptor;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.util.Map;
 
 /**
  * <!-- START SNIPPET: description -->
- *
+ * <p>
  * This interceptor clears the HttpSession.
- * <p/>
+ * </p>
  *
  * <!-- END SNIPPET: description -->
  *
- * <p/> <u>Interceptor parameters:</u>
- *
+ * <p><u>Interceptor parameters:</u></p>
  *
  * <!-- START SNIPPET: extending -->
  *
  * <ul>
- *  <li>none</li>
+ *  <li>None</li>
  * </ul>
  *
  * <!-- END SNIPPET: extending -->
@@ -52,14 +51,12 @@ import com.opensymphony.xwork2.util.logging.LoggerFactory;
  * <!-- START SNIPPET: parameters -->
  *
  * <ul>
- *
  * <li>None</li>
- *
  * </ul>
  *
  * <!-- END SNIPPET: parameters -->
  *
- * <b>Example:</b>
+ * <p><b>Example:</b></p>
  *
  * <pre>
  * <!-- START SNIPPET: example -->
@@ -77,16 +74,14 @@ public class ClearSessionInterceptor extends AbstractInterceptor {
 
     private static final long serialVersionUID = -2102199238428329238L;
 
-    private static final Logger LOG = LoggerFactory.getLogger(ClearSessionInterceptor.class);
+    private static final Logger LOG = LogManager.getLogger(ClearSessionInterceptor.class);
 
     /* (non-Javadoc)
      * @see com.opensymphony.xwork2.interceptor.Interceptor#intercept(com.opensymphony.xwork2.ActionInvocation)
      */
     public String intercept(ActionInvocation invocation) throws Exception {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Clearing HttpSession");
-        }
-        
+        LOG.debug("Clearing HttpSession");
+
         ActionContext ac = invocation.getInvocationContext();
         Map session = ac.getSession();
  

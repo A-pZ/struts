@@ -20,20 +20,34 @@
  */
 package org.apache.struts2.json;
 
-import com.opensymphony.xwork2.util.TextParseUtil;
-import com.opensymphony.xwork2.util.WildcardUtil;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.struts2.json.annotations.SMDMethod;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.Reader;
+import java.io.Writer;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.zip.GZIPOutputStream;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
-import java.lang.reflect.Method;
-import java.util.*;
-import java.util.regex.Pattern;
-import java.util.zip.GZIPOutputStream;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.struts2.json.annotations.SMDMethod;
+
+import com.opensymphony.xwork2.util.TextParseUtil;
+import com.opensymphony.xwork2.util.WildcardUtil;
 
 /**
  * Wrapper for JSONWriter with some utility methods.
@@ -41,19 +55,23 @@ import java.util.zip.GZIPOutputStream;
 public class JSONUtil {
 
     public final static String RFC3339_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
-
-    private static final Logger LOG = LoggerFactory.getLogger(JSONUtil.class);
-
+    public static final boolean CACHE_BEAN_INFO_DEFAULT = true;
+    
+    private static final Logger LOG = LogManager.getLogger(JSONUtil.class);
+          
     /**
      * Serializes an object into JSON.
      *
      * @param object
      *            to be serialized
+     * @param cacheBeanInfo
+     * 			  Specifies whether to cache bean info in the JSONWriter
      * @return JSON string
-     * @throws JSONException
+     * @throws JSONException in case of error during serialize
      */
-    public static String serialize(Object object) throws JSONException {
+    public static String serialize(Object object, boolean cacheBeanInfo) throws JSONException {
         JSONWriter writer = new JSONWriter();
+        writer.setCacheBeanInfo(cacheBeanInfo);
         return writer.write(object);
     }
 
@@ -65,17 +83,50 @@ public class JSONUtil {
      *            to be serialized
      * @param excludeProperties
      *            Patterns matching properties to exclude
+     * @param includeProperties
+     *            Patterns matching properties to include
      * @param ignoreHierarchy
      *            whether to ignore properties defined on base classes of the
      *            root object
+     * @param excludeNullProperties
+     *            enable/disable excluding of null properties
      * @return JSON string
-     * @throws JSONException
+     * @throws JSONException in case of error during serialize
      */
     public static String serialize(Object object, Collection<Pattern> excludeProperties,
             Collection<Pattern> includeProperties, boolean ignoreHierarchy, boolean excludeNullProperties)
             throws JSONException {
+    	return serialize(object, excludeProperties, includeProperties, 
+    			ignoreHierarchy, excludeNullProperties, CACHE_BEAN_INFO_DEFAULT);        
+    }
+    
+    /**
+     * Serializes an object into JSON, excluding any properties matching any of
+     * the regular expressions in the given collection.
+     *
+     * @param object
+     *            to be serialized
+     * @param excludeProperties
+     *            Patterns matching properties to exclude
+     * @param includeProperties
+     *            Patterns matching properties to include
+     * @param ignoreHierarchy
+     *            whether to ignore properties defined on base classes of the
+     *            root object
+     * @param excludeNullProperties
+     *            enable/disable excluding of null properties
+     * @param cacheBeanInfo
+     * 			  Specifies whether to cache bean info in the JSONWriter
+     * @return JSON string
+     * @throws JSONException in case of error during serialize
+     */
+    public static String serialize(Object object, Collection<Pattern> excludeProperties,
+            Collection<Pattern> includeProperties, boolean ignoreHierarchy, boolean excludeNullProperties,
+            boolean cacheBeanInfo)
+            throws JSONException {
         JSONWriter writer = new JSONWriter();
         writer.setIgnoreHierarchy(ignoreHierarchy);
+        writer.setCacheBeanInfo(cacheBeanInfo);
         return writer.write(object, excludeProperties, includeProperties, excludeNullProperties);
     }
 
@@ -87,23 +138,59 @@ public class JSONUtil {
      *            to be serialized
      * @param excludeProperties
      *            Patterns matching properties to exclude
+     * @param includeProperties
+     *            Patterns matching properties to include
      * @param ignoreHierarchy
      *            whether to ignore properties defined on base classes of the
      *            root object
      * @param enumAsBean
      *            whether to serialized enums a Bean or name=value pair
+     * @param excludeNullProperties
+     *            enable/disable excluding of null properties
      * @param defaultDateFormat
      *            date format used to serialize dates
      * @return JSON string
-     * @throws JSONException
+     * @throws JSONException in case of error during serialize
      */
     public static String serialize(Object object, Collection<Pattern> excludeProperties,
                                    Collection<Pattern> includeProperties, boolean ignoreHierarchy, boolean enumAsBean,
                                    boolean excludeNullProperties, String defaultDateFormat) throws JSONException {
+    	return serialize(object, excludeProperties, includeProperties, ignoreHierarchy, enumAsBean, 
+    			excludeNullProperties, defaultDateFormat, CACHE_BEAN_INFO_DEFAULT);        
+    }
+    
+    /**
+     * Serializes an object into JSON, excluding any properties matching any of
+     * the regular expressions in the given collection.
+     *
+     * @param object
+     *            to be serialized
+     * @param excludeProperties
+     *            Patterns matching properties to exclude
+     * @param includeProperties
+     *            Patterns matching properties to include
+     * @param ignoreHierarchy
+     *            whether to ignore properties defined on base classes of the
+     *            root object
+     * @param enumAsBean
+     *            whether to serialized enums a Bean or name=value pair
+     * @param excludeNullProperties
+     *            enable/disable excluding of null properties
+     * @param defaultDateFormat
+     *            date format used to serialize dates
+     * @param cacheBeanInfo
+     * 			  Specifies whether to cache bean info in the JSONWriter
+     * @return JSON string
+     * @throws JSONException in case of error during serialize
+     */
+    public static String serialize(Object object, Collection<Pattern> excludeProperties,
+                                   Collection<Pattern> includeProperties, boolean ignoreHierarchy, boolean enumAsBean,
+                                   boolean excludeNullProperties, String defaultDateFormat, boolean cacheBeanInfo) throws JSONException {
         JSONWriter writer = new JSONWriter();
         writer.setIgnoreHierarchy(ignoreHierarchy);
         writer.setEnumAsBean(enumAsBean);
         writer.setDateFormatter(defaultDateFormat);
+        writer.setCacheBeanInfo(cacheBeanInfo);
         return writer.write(object, excludeProperties, includeProperties, excludeNullProperties);
     }
 
@@ -114,11 +201,27 @@ public class JSONUtil {
      *            Writer to serialize the object to
      * @param object
      *            object to be serialized
-     * @throws IOException
-     * @throws JSONException
+     * @throws IOException  in case of IO errors
+     * @throws JSONException in case of error during serialize
      */
     public static void serialize(Writer writer, Object object) throws IOException, JSONException {
-        writer.write(serialize(object));
+        serialize(writer, object, CACHE_BEAN_INFO_DEFAULT);
+    }
+    
+    /**
+     * Serializes an object into JSON to the given writer.
+     *
+     * @param writer
+     *            Writer to serialize the object to
+     * @param object
+     *            object to be serialized
+     * @param cacheBeanInfo
+     * 			  Specifies whether to cache bean info in the JSONWriter
+     * @throws IOException  in case of IO errors
+     * @throws JSONException in case of error during serialize
+     */
+    public static void serialize(Writer writer, Object object, boolean cacheBeanInfo) throws IOException, JSONException {
+        writer.write(serialize(object, cacheBeanInfo));
     }
 
     /**
@@ -132,13 +235,43 @@ public class JSONUtil {
      *            object to be serialized
      * @param excludeProperties
      *            Patterns matching properties to ignore
-     * @throws IOException
-     * @throws JSONException
+     * @param includeProperties
+     *            Patterns matching properties to include
+     * @param excludeNullProperties
+     *            enable/disable excluding of null properties
+     * @throws IOException  in case of IO errors
+     * @throws JSONException in case of error during serialize
      */
     public static void serialize(Writer writer, Object object, Collection<Pattern> excludeProperties,
             Collection<Pattern> includeProperties, boolean excludeNullProperties) throws IOException,
             JSONException {
-        writer.write(serialize(object, excludeProperties, includeProperties, true, excludeNullProperties));
+    	serialize(writer, object, excludeProperties, includeProperties, excludeNullProperties, CACHE_BEAN_INFO_DEFAULT);
+    }
+    
+    /**
+     * Serializes an object into JSON to the given writer, excluding any
+     * properties matching any of the regular expressions in the given
+     * collection.
+     *
+     * @param writer
+     *            Writer to serialize the object to
+     * @param object
+     *            object to be serialized
+     * @param excludeProperties
+     *            Patterns matching properties to ignore
+     * @param includeProperties
+     *            Patterns matching properties to include
+     * @param excludeNullProperties
+     *            enable/disable excluding of null properties
+     * @param cacheBeanInfo
+     * 			  Specifies whether to cache bean info in the JSONWriter        
+     * @throws IOException  in case of IO errors
+     * @throws JSONException in case of error during serialize
+     */
+    public static void serialize(Writer writer, Object object, Collection<Pattern> excludeProperties,
+            Collection<Pattern> includeProperties, boolean excludeNullProperties, boolean cacheBeanInfo) 
+            throws IOException, JSONException {
+        writer.write(serialize(object, excludeProperties, includeProperties, true, excludeNullProperties, cacheBeanInfo));
     }
 
     /**
@@ -147,7 +280,7 @@ public class JSONUtil {
      * @param json
      *            string in JSON
      * @return desrialized object
-     * @throws JSONException
+     * @throws JSONException in case of error during serialize
      */
     public static Object deserialize(String json) throws JSONException {
         JSONReader reader = new JSONReader();
@@ -198,9 +331,7 @@ public class JSONUtil {
 
         String json = stringBuilder.toString();
 
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("[JSON]" + json);
-        }
+        LOG.debug("[JSON] {}", json);
 
         HttpServletResponse response = serializationParams.getResponse();
 
@@ -257,15 +388,18 @@ public class JSONUtil {
     /**
      * List visible methods carrying the
      *
-     * @SMDMethod annotation
+     * {@literal @}SMDMethod annotation
      *
+     * @param clazz
+     *            class
      * @param ignoreInterfaces
      *            if true, only the methods of the class are examined. If false,
      *            annotations on every interfaces' methods are examined.
+     * @return array of SMD methods
      */
     @SuppressWarnings("unchecked")
     public static Method[] listSMDMethods(Class clazz, boolean ignoreInterfaces) {
-        final List<Method> methods = new LinkedList<Method>();
+        final List<Method> methods = new LinkedList<>();
         if (ignoreInterfaces) {
             for (Method method : clazz.getMethods()) {
                 SMDMethod smdMethodAnnotation = method.getAnnotation(SMDMethod.class);
@@ -313,10 +447,10 @@ public class JSONUtil {
 
     /**
      * Visit all the interfaces realized by the specified object, its
-     * superclasses and its interfaces <p/> Visitation is performed in the
+     * superclasses and its interfaces <br> Visitation is performed in the
      * following order: aClass aClass' interfaces the interface's superclasses
      * (interfaces) aClass' superclass superclass' interfaces superclass'
-     * interface's superclasses (interfaces) super-superclass and so on <p/> The
+     * interface's superclasses (interfaces) super-superclass and so on <br> The
      * Object base class is base excluded. Classes/interfaces are only visited
      * once each
      *
@@ -329,14 +463,14 @@ public class JSONUtil {
      */
     @SuppressWarnings("unchecked")
     public static boolean visitInterfaces(Class aClass, ClassVisitor visitor) {
-        List<Class> classesVisited = new LinkedList<Class>();
+        List<Class> classesVisited = new LinkedList<>();
         return visitUniqueInterfaces(aClass, visitor, classesVisited);
     }
 
-    /**
+    /*
      * Recursive method to visit all the interfaces of a class (and its
      * superclasses and super-interfaces) if they haven't already been visited.
-     * <p/> Always visits itself if it hasn't already been visited
+     * <br> Always visits itself if it hasn't already been visited
      *
      * @param thisClass
      *            the current class to visit (if not already done so)
@@ -373,8 +507,7 @@ public class JSONUtil {
     }
 
     public static boolean isGzipInRequest(HttpServletRequest request) {
-        String header = request.getHeader("Accept-Encoding");
-        return (header != null) && (header.indexOf("gzip") >= 0);
+        return StringUtils.contains(request.getHeader("Accept-Encoding"), "gzip");
     }
 
     public static final String REGEXP_PATTERN = "regexp";
@@ -386,24 +519,24 @@ public class JSONUtil {
 
     /* package */ static Map<String, Map<String, String>> getIncludePatternData()
     {
-        Map<String, Map<String, String>> includePatternData = new HashMap<String, Map<String, String>>();
+        Map<String, Map<String, String>> includePatternData = new HashMap<>();
 
-        Map<String, String> data = new HashMap<String, String>();
+        Map<String, String> data = new HashMap<>();
         data.put(REGEXP_PATTERN, "\\\\\\.");
         data.put(WILDCARD_PATTERN, "\\.");
         includePatternData.put(SPLIT_PATTERN, data);
 
-        data = new HashMap<String, String>();
+        data = new HashMap<>();
         data.put(REGEXP_PATTERN, "\\.");
         data.put(WILDCARD_PATTERN, ".");
         includePatternData.put(JOIN_STRING, data);
 
-        data = new HashMap<String, String>();
+        data = new HashMap<>();
         data.put(REGEXP_PATTERN, "\\[");
         data.put(WILDCARD_PATTERN, "[");
         includePatternData.put(ARRAY_BEGIN_STRING, data);
 
-        data = new HashMap<String, String>();
+        data = new HashMap<>();
         data.put(REGEXP_PATTERN, "\\]");
         data.put(WILDCARD_PATTERN, "]");
         includePatternData.put(ARRAY_END_STRING, data);
@@ -419,8 +552,8 @@ public class JSONUtil {
 
     /* package */ static List<Pattern> processIncludePatterns(Set<String> includePatterns, String type, Map<String, Map<String, String>> includePatternData) {
         if (includePatterns != null) {
-            List<Pattern> results = new ArrayList<Pattern>(includePatterns.size());
-            Map<String, String> existingPatterns = new HashMap<String, String>();
+            List<Pattern> results = new ArrayList<>(includePatterns.size());
+            Map<String, String> existingPatterns = new HashMap<>();
             for (String pattern : includePatterns) {
                 processPattern(results, existingPatterns, pattern, type, includePatternData);
             }
@@ -458,7 +591,7 @@ public class JSONUtil {
         return patternExpr;
     }
 
-    /**
+    /*
      * Add a pattern that does not have the indexed property matching (ie. list\[\d+\] becomes list).
      */
     private static boolean isIndexedProperty(String patternPiece, String type, Map<String, Map<String, String>> includePatternData) {
@@ -468,7 +601,7 @@ public class JSONUtil {
     private static void addPattern(List<Pattern> results, String pattern, String type) {
         results.add(REGEXP_PATTERN.equals(type) ? Pattern.compile(pattern) : WildcardUtil.compileWildcardPattern(pattern));
         if (LOG.isTraceEnabled()) {
-            LOG.trace("Adding include " + (REGEXP_PATTERN.equals(type) ? "property" : "wildcard") + " expression:  " + pattern);
+            LOG.trace("Adding include {} expression: {}", (REGEXP_PATTERN.equals(type) ? "property" : "wildcard"), pattern);
         }
     }
 

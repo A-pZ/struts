@@ -23,8 +23,8 @@ package org.apache.struts2.dispatcher.multipart;
 
 import com.opensymphony.xwork2.inject.Inject;
 import com.opensymphony.xwork2.util.LocalizedTextUtil;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import http.utils.multipartrequest.ServletMultipartRequest;
 import org.apache.struts2.StrutsConstants;
 
@@ -45,7 +45,7 @@ import java.util.Locale;
  */
 public class PellMultiPartRequest implements MultiPartRequest {
 
-    private static final Logger LOG = LoggerFactory.getLogger(PellMultiPartRequest.class);
+    private static final Logger LOG = LogManager.getLogger(PellMultiPartRequest.class);
     private ServletMultipartRequest multi;
 
     private String defaultEncoding;
@@ -138,9 +138,10 @@ public class PellMultiPartRequest implements MultiPartRequest {
     /**
      * Sets the encoding for the uploaded params.  This needs to be set if you are using character sets other than
      * ASCII.
-     * <p/>
+     * <p>
      * The encoding is looked up from the configuration setting 'struts.i18n.encoding'.  This is usually set in
      * default.properties & struts.properties.
+     * </p>
      */
     private void setEncoding() {
         String encoding = null;
@@ -181,9 +182,7 @@ public class PellMultiPartRequest implements MultiPartRequest {
                 }
                 if ((currentFile != null) && currentFile.isFile()) {
                     if (!currentFile.delete()) {
-                        if (LOG.isWarnEnabled()) {
-                            LOG.warn("Resource Leaking:  Could not remove uploaded file [#0]", currentFile.getAbsolutePath());
-                        }
+                        LOG.warn("Resource Leaking: Could not remove uploaded file [{}]", currentFile.getAbsolutePath());
                     }
                 }
             }

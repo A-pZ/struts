@@ -22,6 +22,7 @@
 package org.apache.struts2.components;
 
 import com.opensymphony.xwork2.util.ValueStack;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.struts2.util.ContainUtil;
 import org.apache.struts2.util.MakeIterator;
 import org.apache.struts2.views.annotations.StrutsTagAttribute;
@@ -33,16 +34,17 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
+ * <p>
  * DoubleListUIBean is the standard superclass of all Struts list handling components.
- * <p/>
- * <p/>
- * <p/>
+ * </p>
+ *
+ *
  * <!-- START SNIPPET: javadoc -->
- * <p/>
+ * <p>
  * Note that the listkey and listvalue attribute will default to "key" and "value"
  * respectively only when the list attribute is evaluated to a Map or its decendant.
  * Everything else will result in listkey and listvalue to be null and not used.
- * <p/>
+ * </p>
  * <!-- END SNIPPET: javadoc -->
  */
 public abstract class ListUIBean extends UIBean {
@@ -96,11 +98,11 @@ public abstract class ListUIBean extends UIBean {
         }
 
         if (value instanceof Collection) {
-            addParameter("listSize", Integer.valueOf(((Collection) value).size()));
+            addParameter("listSize", ((Collection) value).size());
         } else if (value instanceof Map) {
-            addParameter("listSize", Integer.valueOf(((Map) value).size()));
+            addParameter("listSize", ((Map) value).size());
         } else if (value != null && value.getClass().isArray()) {
-            addParameter("listSize", Integer.valueOf(Array.getLength(value)));
+            addParameter("listSize", Array.getLength(value));
         }
 
         if (listKey != null) {
@@ -127,15 +129,15 @@ public abstract class ListUIBean extends UIBean {
             addParameter("listLabelKey", listLabelKey);
         }
 
-        if (listCssClass != null && listCssClass.trim().length() > 0) {
+        if (StringUtils.isNotBlank(listCssClass)) {
             addParameter("listCssClass", listCssClass);
         }
 
-        if (listCssStyle != null && listCssStyle.trim().length() > 0) {
+        if (StringUtils.isNotBlank(listCssStyle)) {
             addParameter("listCssStyle", listCssStyle);
         }
 
-        if (listTitle != null && listTitle.trim().length() > 0) {
+        if (StringUtils.isNotBlank(listTitle)) {
             addParameter("listTitle", listTitle);
         }
     }
@@ -154,12 +156,12 @@ public abstract class ListUIBean extends UIBean {
         this.list = list;
     }
 
-    @StrutsTagAttribute(description = " Property of list objects to get field value from")
+    @StrutsTagAttribute(description = "Property of list objects to get field value from")
     public void setListKey(String listKey) {
         this.listKey = listKey;
     }
 
-    @StrutsTagAttribute(description = " Property of list objects to get field value label from")
+    @StrutsTagAttribute(description = "Property of list objects to get field value label from")
     public void setListValueKey(String listValueKey) {
         this.listValueKey = listValueKey;
     }

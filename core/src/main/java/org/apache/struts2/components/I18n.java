@@ -21,24 +21,23 @@
 
 package org.apache.struts2.components;
 
-import java.io.Writer;
-import java.util.Locale;
-import java.util.ResourceBundle;
-
-import org.apache.struts2.views.annotations.StrutsTag;
-import org.apache.struts2.views.annotations.StrutsTagAttribute;
-import org.apache.struts2.StrutsException;
-
 import com.opensymphony.xwork2.ActionContext;
 import com.opensymphony.xwork2.LocaleProvider;
-import com.opensymphony.xwork2.TextProviderFactory;
 import com.opensymphony.xwork2.TextProvider;
+import com.opensymphony.xwork2.TextProviderFactory;
 import com.opensymphony.xwork2.inject.Container;
 import com.opensymphony.xwork2.inject.Inject;
 import com.opensymphony.xwork2.util.LocalizedTextUtil;
 import com.opensymphony.xwork2.util.ValueStack;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.struts2.StrutsException;
+import org.apache.struts2.views.annotations.StrutsTag;
+import org.apache.struts2.views.annotations.StrutsTagAttribute;
+
+import java.io.Writer;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
 /**
  * <!-- START SNIPPET: javadoc -->
@@ -49,8 +48,6 @@ import com.opensymphony.xwork2.util.logging.LoggerFactory;
  *
  * <!-- END SNIPPET: javadoc -->
  *
- * <p/>
- *
  * <!-- START SNIPPET: params-->
  *
  * <ul>
@@ -59,9 +56,9 @@ import com.opensymphony.xwork2.util.logging.LoggerFactory;
  *
  * <!-- END SNIPPET: params -->
  *
- * <p/>
- *
+ * <p>
  * Example:
+ * </p>
  *
  * <pre>
  * <!-- START SNIPPET: example -->
@@ -89,7 +86,7 @@ import com.opensymphony.xwork2.util.logging.LoggerFactory;
                 " and place it on the value stack")
 public class I18n extends Component {
 
-    private static final Logger LOG = LoggerFactory.getLogger(I18n.class);
+    private static final Logger LOG = LogManager.getLogger(I18n.class);
 
     protected boolean pushed;
     protected String name;
@@ -129,8 +126,7 @@ public class I18n extends Component {
                 pushed = true;
             }
         } catch (Exception e) {
-            String msg = "Could not find the bundle " + name;
-            throw new StrutsException(msg, e);
+            throw new StrutsException("Could not find the bundle " + name, e);
         }
 
         return result;

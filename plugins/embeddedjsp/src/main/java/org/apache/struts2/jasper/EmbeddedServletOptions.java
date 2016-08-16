@@ -216,15 +216,6 @@ public final class EmbeddedServletOptions implements Options {
     }
     
     /**
-     * Should errors be sent to client or thrown into stderr?
-     * @deprecated
-     */
-    @Deprecated
-    public boolean getSendErrorToClient() {
-        return true;
-    }
-    
-    /**
      * Should class files be compiled with debug information?
      */
     public boolean getClassDebugInfo() {
@@ -371,7 +362,7 @@ public final class EmbeddedServletOptions implements Options {
     }
 
     /**
-     * Should we include a source fragment in exception messages, which could be displayed
+     *  @return Should we include a source fragment in exception messages, which could be displayed
      * to the developer ?
      */
     public boolean getDisplaySourceFragment() {
@@ -380,7 +371,10 @@ public final class EmbeddedServletOptions implements Options {
 
     /**
      * Create an EmbeddedServletOptions object using data available from
-     * ServletConfig and ServletContext. 
+     * ServletConfig and ServletContext.
+     *
+     * @param config servlet config
+     * @param context servlet context
      */
     public EmbeddedServletOptions(ServletConfig config,
             ServletContext context) {

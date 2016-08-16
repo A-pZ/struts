@@ -21,8 +21,8 @@
 
 package org.apache.struts2.sitegraph;
 
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import org.apache.struts2.StrutsException;
 import org.apache.struts2.sitegraph.renderers.DOTRenderer;
 
@@ -30,22 +30,26 @@ import java.io.*;
 
 /**
  * <!-- START SNIPPET: javadocs-intro -->
+ * <p>
  * SiteGraph is a tool that renders out GraphViz-generated images depicting your
  * Struts-powered web application's flow. SiteGraph requires GraphViz be installed
  * and that the "dot" executable be in your command path. You can find GraphViz
  * at http://www.graphviz.org.
+ * </p>
  * <!-- END SNIPPET: javadocs-intro -->
- * <p/>
+ *
  * <!-- START SNIPPET: javadocs-api -->
+ * <p>
  * If you wish to use SiteGraph through its API rather than through the command line,
  * you can do that as well. All you need to do is create a new SiteGraph instance,
  * optionally specify a {@link Writer} to output the dot content to, and then call
  * {@link #prepare()}.
+ * </p>
  * <!-- END SNIPPET: javadocs-api -->
  */
 public class SiteGraph {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SiteGraph.class);
+    private static final Logger LOG = LogManager.getLogger(SiteGraph.class);
 
     private String configDir;
     private String views;
@@ -66,18 +70,17 @@ public class SiteGraph {
         }
 
         if (args.length != 8 && args.length != 6) {
-            InputStream is = SiteGraph.class.getResourceAsStream("sitegraph-usage.txt");
-            byte[] buffer = new byte[2048];
-            int length;
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            while ((length = is.read(buffer)) != -1) {
-                baos.write(buffer, 0, length);
+            try (InputStream is = SiteGraph.class.getResourceAsStream("sitegraph-usage.txt");
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                byte[] buffer = new byte[2048];
+                int length;
+                while ((length = is.read(buffer)) != -1) {
+                    baos.write(buffer, 0, length);
+                }
+            
+                String usage = baos.toString();
+                System.out.println(usage.replaceAll("//.*", ""));
             }
-            is.close();
-            baos.close();
-
-            String usage = baos.toString();
-            System.out.println(usage.replaceAll("//.*", ""));
             return;
         }
 

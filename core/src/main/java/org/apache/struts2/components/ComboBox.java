@@ -21,36 +21,40 @@
 
 package org.apache.struts2.components;
 
+import com.opensymphony.xwork2.util.ValueStack;
+import org.apache.struts2.util.MakeIterator;
+import org.apache.struts2.views.annotations.StrutsTag;
+import org.apache.struts2.views.annotations.StrutsTagAttribute;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.apache.struts2.views.annotations.StrutsTag;
-import org.apache.struts2.views.annotations.StrutsTagAttribute;
-import org.apache.struts2.util.MakeIterator;
-
-import com.opensymphony.xwork2.util.ValueStack;
-
 /**
  * <!-- START SNIPPET: javadoc -->
+ * <p>
  * The combo box is basically an HTML INPUT of type text and HTML SELECT grouped together to give you a combo box
  * functionality. You can place text in the INPUT control by using the SELECT control or type it in directly in
- * the text field.<p/>
+ * the text field.
+ * </p>
  *
+ * <p>
  * In this example, the SELECT will be populated from id=year attribute. Counter is itself an Iterator. It will
  * span from first to last. The population is done via javascript, and requires that this tag be surrounded by a
- * &lt;form&gt;.<p/>
+ * &lt;form&gt;.
+ * </p>
  *
+ * <p>
  * Note that unlike the &lt;s:select/&gt; tag, there is no ability to define the individual &lt;option&gt; tags' id attribute
  * or content separately. Each of these is simply populated from the toString() method of the list item. Presumably
  * this is because the select box isn't intended to actually submit useful data, but to assist the user in filling
- * out the text field.<p/>
+ * out the text field.
+ * </p>
  * <!-- END SNIPPET: javadoc -->
  *
- * <p/> <b>Examples</b>
+ * <p><b>Examples</b></p>
  *
  * <pre>
  * <!-- START SNIPPET: example -->
@@ -64,24 +68,24 @@ import com.opensymphony.xwork2.util.ValueStack;
  * &lt;/s:bean&gt;
  *
  * &lt;-- Example Two --&gt;
- * <s:combobox
+ * &lt;s:combobox
  *     label="My Favourite Fruit"
  *     name="myFavouriteFruit"
  *     list="{'apple','banana','grape','pear'}"
  *     headerKey="-1"
  *     headerValue="--- Please Select ---"
  *     emptyOption="true"
- *     value="banana" />
+ *     value="banana" /&gt;
  *
  * &lt;-- Example Two --&gt;
- * <s:combobox
+ * &lt;s:combobox
  *    label="My Favourite Color"
  *    name="myFavouriteColor"
  *    list="#{'red':'red','green':'green','blue':'blue'}"
  *    headerKey="-1"
  *    headerValue="--- Please Select ---"
  *    emptyOption="true"
- *    value="green" />
+ *    value="green" /&gt;
  *
  * Velocity:
  * #tag( ComboBox "label=Birth year" "size=6" "maxlength=4" "name=birthYear" "list=#year" )
@@ -158,7 +162,7 @@ public class ComboBox extends TextField {
                 "Example: people or people.{name}");
     }
 
-    @StrutsTagAttribute(description="Iteratable source to populate from. " +
+    @StrutsTagAttribute(description = "Iterable source to populate from. " +
                 "If this is missing, the select widget is simply not displayed.", required=true)
     public void setList(String list) {
         this.list = list;
@@ -179,12 +183,12 @@ public class ComboBox extends TextField {
         this.headerValue = headerValue;
     }
 
-    @StrutsTagAttribute(description="Set the key used to retrive the option key.")
+    @StrutsTagAttribute(description = "Set the key used to retrieve the option key.")
     public void setListKey(String listKey) {
         this.listKey = listKey;
     }
 
-    @StrutsTagAttribute(description="Set the value used to retrive the option value.")
+    @StrutsTagAttribute(description = "Set the value used to retrieve the option value.")
     public void setListValue(String listValue) {
         this.listValue = listValue;
     }

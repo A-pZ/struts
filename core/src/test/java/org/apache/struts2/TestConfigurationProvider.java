@@ -24,8 +24,6 @@ package org.apache.struts2;
 import com.opensymphony.xwork2.Action;
 import com.opensymphony.xwork2.ActionProxyFactory;
 import com.opensymphony.xwork2.DefaultActionProxyFactory;
-import com.opensymphony.xwork2.security.DefaultExcludedPatternsChecker;
-import com.opensymphony.xwork2.security.ExcludedPatternsChecker;
 import com.opensymphony.xwork2.ObjectFactory;
 import com.opensymphony.xwork2.config.Configuration;
 import com.opensymphony.xwork2.config.ConfigurationException;
@@ -37,9 +35,11 @@ import com.opensymphony.xwork2.config.entities.ResultConfig;
 import com.opensymphony.xwork2.inject.ContainerBuilder;
 import com.opensymphony.xwork2.interceptor.ParametersInterceptor;
 import com.opensymphony.xwork2.mock.MockResult;
+import com.opensymphony.xwork2.security.DefaultExcludedPatternsChecker;
+import com.opensymphony.xwork2.security.ExcludedPatternsChecker;
 import com.opensymphony.xwork2.util.location.LocatableProperties;
 import com.opensymphony.xwork2.validator.ValidationInterceptor;
-import org.apache.struts2.dispatcher.ServletDispatcherResult;
+import org.apache.struts2.result.ServletDispatcherResult;
 import org.apache.struts2.interceptor.TokenInterceptor;
 import org.apache.struts2.interceptor.TokenSessionStoreInterceptor;
 import org.apache.struts2.views.jsp.ui.DoubleValidationAction;
@@ -127,6 +127,7 @@ public class TestConfigurationProvider implements ConfigurationProvider {
             .addActionConfig("testActionTagAction", new ActionConfig.Builder("", "", TestAction.class.getName())
                 .addResultConfig(new ResultConfig.Builder(Action.SUCCESS, TestActionTagResult.class.getName()).build())
                 .addResultConfig(new ResultConfig.Builder(Action.INPUT, TestActionTagResult.class.getName()).build())
+                .addAllowedMethod("input")
                 .build())
             .build();
 

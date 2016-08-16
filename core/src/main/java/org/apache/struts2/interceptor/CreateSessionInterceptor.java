@@ -23,8 +23,8 @@ package org.apache.struts2.interceptor;
 
 import com.opensymphony.xwork2.ActionInvocation;
 import com.opensymphony.xwork2.interceptor.AbstractInterceptor;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.struts2.ServletActionContext;
 import org.apache.struts2.dispatcher.SessionMap;
 
@@ -33,21 +33,24 @@ import javax.servlet.http.HttpSession;
 /**
  * <!-- START SNIPPET: description -->
  *
+ * <p>
  * This interceptor creates the HttpSession if it doesn't exist, also SessionMap is recreated and put in ServletActionContext.
- * <p/>
+ * </p>
+ *
+ * <p>
  * This is particular useful when using the &lt;@s.token&gt; tag in freemarker templates.
  * The tag <b>do</b> require that a HttpSession is already created since freemarker commits
  * the response to the client immediately.
- *
+ * </p>
  * <!-- END SNIPPET: description -->
  *
- * <p/> <u>Interceptor parameters:</u>
+ * <p><u>Interceptor parameters:</u></p>
  *
  *
  * <!-- START SNIPPET: extending -->
  *
  * <ul>
- *  <li>none</li>
+ *  <li>None</li>
  * </ul>
  *
  * <!-- END SNIPPET: extending -->
@@ -56,14 +59,12 @@ import javax.servlet.http.HttpSession;
  * <!-- START SNIPPET: parameters -->
  *
  * <ul>
- *
  * <li>None</li>
- *
  * </ul>
  *
  * <!-- END SNIPPET: parameters -->
  *
- * <b>Example:</b>
+ * <p><b>Example:</b></p>
  *
  * <pre>
  * <!-- START SNIPPET: example -->
@@ -76,14 +77,12 @@ import javax.servlet.http.HttpSession;
  *
  * <!-- END SNIPPET: example -->
  * </pre>
- *
- * @version $Date$ $Id$
  */
 public class CreateSessionInterceptor extends AbstractInterceptor {
 
     private static final long serialVersionUID = -4590322556118858869L;
 
-    private static final Logger LOG = LoggerFactory.getLogger(CreateSessionInterceptor.class);
+    private static final Logger LOG = LogManager.getLogger(CreateSessionInterceptor.class);
 
 
     /* (non-Javadoc)
@@ -92,9 +91,7 @@ public class CreateSessionInterceptor extends AbstractInterceptor {
     public String intercept(ActionInvocation invocation) throws Exception {
         HttpSession httpSession = ServletActionContext.getRequest().getSession(false);
         if (httpSession == null) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Creating new HttpSession and new SessionMap in ServletActionContext");
-            }
+            LOG.debug("Creating new HttpSession and new SessionMap in ServletActionContext");
             ServletActionContext.getRequest().getSession(true);
             ServletActionContext.getContext().setSession(new SessionMap<String, Object>(ServletActionContext.getRequest()));
         }

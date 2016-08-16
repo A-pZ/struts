@@ -20,43 +20,40 @@
  */
 package org.apache.struts2.json;
 
-import java.beans.IntrospectionException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Pattern;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.apache.struts2.ServletActionContext;
-import org.apache.struts2.StrutsConstants;
-import org.apache.struts2.dispatcher.FilterDispatcher;
-import org.apache.struts2.json.annotations.SMDMethod;
-import org.apache.struts2.json.rpc.RPCError;
-import org.apache.struts2.json.rpc.RPCErrorCode;
-import org.apache.struts2.json.rpc.RPCResponse;
-
 import com.opensymphony.xwork2.Action;
 import com.opensymphony.xwork2.ActionInvocation;
 import com.opensymphony.xwork2.inject.Inject;
 import com.opensymphony.xwork2.interceptor.AbstractInterceptor;
 import com.opensymphony.xwork2.util.ValueStack;
 import com.opensymphony.xwork2.util.WildcardUtil;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.struts2.ServletActionContext;
+import org.apache.struts2.StrutsConstants;
+import org.apache.struts2.dispatcher.PrepareOperations;
+import org.apache.struts2.json.annotations.SMDMethod;
+import org.apache.struts2.json.rpc.RPCError;
+import org.apache.struts2.json.rpc.RPCErrorCode;
+import org.apache.struts2.json.rpc.RPCResponse;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.beans.IntrospectionException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
+import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * Populates an action from a JSON string
  */
 public class JSONInterceptor extends AbstractInterceptor {
+
     private static final long serialVersionUID = 4950170304212158803L;
-    private static final Logger LOG = LoggerFactory.getLogger(JSONInterceptor.class);
+    private static final Logger LOG = LogManager.getLogger(JSONInterceptor.class);
+
     private boolean enableSMD = false;
     private boolean enableGZIP = false;
     private boolean wrapWithComments;
@@ -145,8 +142,9 @@ public class JSONInterceptor extends AbstractInterceptor {
                 if (obj instanceof Map) {
                     Map smd = (Map) obj;
 
-                    if (rootObject == null) // model makes no sense when using RPC
+                    if (rootObject == null) { // model makes no sense when using RPC
                         rootObject = invocation.getAction();
+                    }
 
                     // invoke method
                     try {
@@ -183,10 +181,7 @@ public class JSONInterceptor extends AbstractInterceptor {
 
             return Action.NONE;
         } else {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Content type must be 'application/json' or 'application/json-rpc'. " +
-                          "Ignoring request with content type " + contentType);
-            }
+            LOG.debug("Content type must be 'application/json' or 'application/json-rpc'. Ignoring request with content type ", contentType);
         }
 
         return invocation.invoke();
@@ -256,8 +251,9 @@ public class JSONInterceptor extends AbstractInterceptor {
                 Type genericType = genericTypes[i];
 
                 // clean up the values
-                if (dataCleaner != null)
+                if (dataCleaner != null) {
                     parameter = dataCleaner.clean("[" + i + "]", parameter);
+                }
 
                 Object converted = populator.convert(paramType, genericType, parameter, method);
                 invocationParameters.add(converted);
@@ -324,6 +320,8 @@ public class JSONInterceptor extends AbstractInterceptor {
     /**
      * Ignore annotations on methods in interfaces You may need to set to this
      * true if your action is a proxy/enhanced as annotations are not inherited
+     *
+     * @param ignoreSMDMethodInterfaces set the flag for ignore SMD method interfaces
      */
     public void setIgnoreSMDMethodInterfaces(boolean ignoreSMDMethodInterfaces) {
         this.ignoreSMDMethodInterfaces = ignoreSMDMethodInterfaces;
@@ -332,7 +330,7 @@ public class JSONInterceptor extends AbstractInterceptor {
     /**
      * Wrap generated JSON with comments. Only used if SMD is enabled.
      * 
-     * @param wrapWithComments
+     * @param wrapWithComments Wrap generated JSON with comments.
      */
     public void setWrapWithComments(boolean wrapWithComments) {
         this.wrapWithComments = wrapWithComments;
@@ -344,9 +342,7 @@ public class JSONInterceptor extends AbstractInterceptor {
     }
 
     /**
-     * Ignore properties defined on base classes of the root object.
-     * 
-     * @param ignoreHierarchy
+     * @param ignoreHierarchy Ignore properties defined on base classes of the root object.
      */
     public void setIgnoreHierarchy(boolean ignoreHierarchy) {
         this.ignoreHierarchy = ignoreHierarchy;
@@ -386,8 +382,8 @@ public class JSONInterceptor extends AbstractInterceptor {
      * @return true if debugging is turned on
      */
     public boolean getDebug() {
-        Boolean devModeOverride = FilterDispatcher.getDevModeOverride();
-        return devModeOverride != null ? devModeOverride.booleanValue() : this.debug;
+        Boolean devModeOverride = PrepareOperations.getDevModeOverride();
+        return devModeOverride != null ? devModeOverride : this.debug;
     }
 
     /**
@@ -401,10 +397,8 @@ public class JSONInterceptor extends AbstractInterceptor {
     }
 
     @Inject(StrutsConstants.STRUTS_DEVMODE)
-    public void setDevMode(
-        String mode)
-    {
-        setDebug("true".equalsIgnoreCase(mode));
+    public void setDevMode(String mode) {
+        setDebug(BooleanUtils.toBoolean(mode));
     }
 
     /**
@@ -417,7 +411,7 @@ public class JSONInterceptor extends AbstractInterceptor {
     public void setExcludeProperties(String commaDelim) {
         Set<String> excludePatterns = JSONUtil.asSet(commaDelim);
         if (excludePatterns != null) {
-            this.excludeProperties = new ArrayList<Pattern>(excludePatterns.size());
+            this.excludeProperties = new ArrayList<>(excludePatterns.size());
             for (String pattern : excludePatterns) {
                 this.excludeProperties.add(Pattern.compile(pattern));
             }
@@ -434,7 +428,7 @@ public class JSONInterceptor extends AbstractInterceptor {
     public void setExcludeWildcards(String commaDelim) {
         Set<String> excludePatterns = JSONUtil.asSet(commaDelim);
         if (excludePatterns != null) {
-            this.excludeProperties = new ArrayList<Pattern>(excludePatterns.size());
+            this.excludeProperties = new ArrayList<>(excludePatterns.size());
             for (String pattern : excludePatterns) {
                 this.excludeProperties.add(WildcardUtil.compileWildcardPattern(pattern));
             }
@@ -473,13 +467,13 @@ public class JSONInterceptor extends AbstractInterceptor {
     }
 
     /**
-     * Returns the appropriate set of includes, based on debug setting.
+     * @return  the appropriate set of includes, based on debug setting.
      * Derived classes can override if there are additional, custom
      * debug-only parameters.
      */
     protected List getIncludeProperties() {
         if (includeProperties != null && getDebug()) {
-            List<Pattern> list = new ArrayList<Pattern>(includeProperties);
+            List<Pattern> list = new ArrayList<>(includeProperties);
             list.add(Pattern.compile("debug"));
             list.add(WildcardUtil.compileWildcardPattern("error.*"));
             return list;
@@ -509,7 +503,7 @@ public class JSONInterceptor extends AbstractInterceptor {
     /**
      * Add headers to response to prevent the browser from caching the response
      * 
-     * @param noCache
+     * @param noCache no cache
      */
     public void setNoCache(boolean noCache) {
         this.noCache = noCache;
@@ -520,9 +514,7 @@ public class JSONInterceptor extends AbstractInterceptor {
     }
 
     /**
-     * Do not serialize properties with a null value
-     * 
-     * @param excludeNullProperties
+     * @param excludeNullProperties  Do not serialize properties with a null value
      */
     public void setExcludeNullProperties(boolean excludeNullProperties) {
         this.excludeNullProperties = excludeNullProperties;
@@ -537,9 +529,7 @@ public class JSONInterceptor extends AbstractInterceptor {
     }
 
     /**
-     * Add "{} && " to generated JSON
-     * 
-     * @param prefix
+     * @param prefix Add "{} &amp;&amp; " to generated JSON
      */
     public void setPrefix(boolean prefix) {
         this.prefix = prefix;

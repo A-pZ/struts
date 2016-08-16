@@ -27,58 +27,58 @@ import com.opensymphony.xwork2.config.ConfigurationManager;
 import com.opensymphony.xwork2.config.entities.PackageConfig;
 import com.opensymphony.xwork2.inject.Container;
 import com.opensymphony.xwork2.inject.Inject;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.struts2.RequestUtils;
 import org.apache.struts2.ServletActionContext;
 import org.apache.struts2.StrutsConstants;
 import org.apache.struts2.util.PrefixTrie;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
  * <!-- START SNIPPET: javadoc -->
- * <p/>
+ * <p>
  * Default action mapper implementation, using the standard *.[ext] (where ext
  * usually "action") pattern. The extension is looked up from the Struts
  * configuration key <b>struts.action.extension</b>.
- * <p/>
- * <p/> To help with dealing with buttons and other related requirements, this
+ * </p>
+ *
+ * <p>
+ * To help with dealing with buttons and other related requirements, this
  * mapper (and other {@link ActionMapper}s, we hope) has the ability to name a
  * button with some predefined prefix and have that button name alter the
  * execution behaviour. The four prefixes are:
- * <p/>
+ * </p>
+ *
  * <ul>
  * <li>Method prefix - <i>method:default</i></li>
  * <li>Action prefix - <i>action:dashboard</i></li>
  * </ul>
- * <p/>
+ *
+ * <p>
  * In addition to these four prefixes, this mapper also understands the
  * action naming pattern of <i>foo!bar</i> in either the extension form (eg:
  * foo!bar.action) or in the prefix form (eg: action:foo!bar). This syntax tells
  * this mapper to map to the action named <i>foo</i> and the method <i>bar</i>.
- * <p/>
+ * </p>
  * <!-- END SNIPPET: javadoc -->
  * <b>Method Prefix</b>
  * <!-- START SNIPPET: method -->
- * <p/>
+ * <p>
  * With method-prefix, instead of calling baz action's execute() method (by
  * default if it isn't overriden in struts.xml to be something else), the baz
  * action's anotherMethod() will be called. A very elegant way determine which
  * button is clicked. Alternatively, one would have submit button set a
  * particular value on the action when clicked, and the execute() method decides
  * on what to do with the setted value depending on which button is clicked.
- * <p/>
+ * </p>
  * <!-- END SNIPPET: method -->
- * <p/>
+ *
  * <pre>
  *  &lt;!-- START SNIPPET: method-example --&gt;
  *  &lt;s:form action=&quot;baz&quot;&gt;
@@ -90,14 +90,14 @@ import java.util.regex.Pattern;
  * </pre>
  * <b>Action prefix</b>
  * <!-- START SNIPPET: action -->
- * <p/>
+ * <p>
  * With action-prefix, instead of executing baz action's execute() method (by
- * default if it isn't overriden in struts.xml to be something else), the
- * anotherAction action's execute() method (assuming again if it isn't overriden
+ * default if it isn't overridden in struts.xml to be something else), the
+ * anotherAction action's execute() method (assuming again if it isn't overridden
  * with something else in struts.xml) will be executed.
- * <p/>
+ * </p>
  * <!-- END SNIPPET: action -->
- * <p/>
+ *
  * <pre>
  *  &lt;!-- START SNIPPET: action-example --&gt;
  *  &lt;s:form action=&quot;baz&quot;&gt;
@@ -110,7 +110,7 @@ import java.util.regex.Pattern;
  */
 public class DefaultActionMapper implements ActionMapper {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DefaultActionMapper.class);
+    private static final Logger LOG = LogManager.getLogger(DefaultActionMapper.class);
 
     protected static final String METHOD_PREFIX = "method:";
     protected static final String ACTION_PREFIX = "action:";
@@ -185,18 +185,18 @@ public class DefaultActionMapper implements ActionMapper {
     }
 
     @Inject(StrutsConstants.STRUTS_ENABLE_DYNAMIC_METHOD_INVOCATION)
-    public void setAllowDynamicMethodCalls(String allow) {
-        allowDynamicMethodCalls = "true".equalsIgnoreCase(allow);
+    public void setAllowDynamicMethodCalls(String enableDynamicMethodCalls) {
+        this.allowDynamicMethodCalls = BooleanUtils.toBoolean(enableDynamicMethodCalls);
     }
 
     @Inject(StrutsConstants.STRUTS_ENABLE_SLASHES_IN_ACTION_NAMES)
-    public void setSlashesInActionNames(String allow) {
-        allowSlashesInActionNames = "true".equals(allow);
+    public void setSlashesInActionNames(String enableSlashesInActionNames) {
+        this.allowSlashesInActionNames = BooleanUtils.toBoolean(enableSlashesInActionNames);
     }
 
     @Inject(StrutsConstants.STRUTS_ALWAYS_SELECT_FULL_NAMESPACE)
-    public void setAlwaysSelectFullNamespace(String val) {
-        this.alwaysSelectFullNamespace = "true".equals(val);
+    public void setAlwaysSelectFullNamespace(String alwaysSelectFullNamespace) {
+        this.alwaysSelectFullNamespace = BooleanUtils.toBoolean(alwaysSelectFullNamespace);
     }
 
     @Inject(value = StrutsConstants.STRUTS_ALLOWED_ACTION_NAMES, required = false)
@@ -206,12 +206,12 @@ public class DefaultActionMapper implements ActionMapper {
 
     @Inject(value = StrutsConstants.STRUTS_MAPPER_ACTION_PREFIX_ENABLED)
     public void setAllowActionPrefix(String allowActionPrefix) {
-        this.allowActionPrefix = "true".equalsIgnoreCase(allowActionPrefix);
+        this.allowActionPrefix = BooleanUtils.toBoolean(allowActionPrefix);
     }
 
     @Inject(value = StrutsConstants.STRUTS_MAPPER_ACTION_PREFIX_CROSSNAMESPACES)
     public void setAllowActionCrossNamespaceAccess(String allowActionCrossNamespaceAccess) {
-        this.allowActionCrossNamespaceAccess = "true".equalsIgnoreCase(allowActionCrossNamespaceAccess);
+        this.allowActionCrossNamespaceAccess = BooleanUtils.toBoolean(allowActionCrossNamespaceAccess);
     }
 
     @Inject
@@ -221,8 +221,8 @@ public class DefaultActionMapper implements ActionMapper {
 
     @Inject(StrutsConstants.STRUTS_ACTION_EXTENSION)
     public void setExtensions(String extensions) {
-        if (extensions != null && !"".equals(extensions)) {
-            List<String> list = new ArrayList<String>();
+        if (StringUtils.isNotEmpty(extensions)) {
+            List<String> list = new ArrayList<>();
             String[] tokens = extensions.split(",");
             Collections.addAll(list, tokens);
             if (extensions.endsWith(",")) {
@@ -292,7 +292,7 @@ public class DefaultActionMapper implements ActionMapper {
      */
     public void handleSpecialParameters(HttpServletRequest request, ActionMapping mapping) {
         // handle special parameter prefixes.
-        Set<String> uniqueParameters = new HashSet<String>();
+        Set<String> uniqueParameters = new HashSet<>();
         Map parameterMap = request.getParameterMap();
         for (Object o : parameterMap.keySet()) {
             String key = (String) o;
@@ -319,6 +319,7 @@ public class DefaultActionMapper implements ActionMapper {
      *
      * @param uri     The uri
      * @param mapping The action mapping to populate
+     * @param configManager configuration manager
      */
     protected void parseNameAndNamespace(String uri, ActionMapping mapping, ConfigurationManager configManager) {
         String namespace, name;
@@ -384,30 +385,15 @@ public class DefaultActionMapper implements ActionMapper {
         if (allowedActionNames.matcher(rawActionName).matches()) {
             return rawActionName;
         } else {
-            if (LOG.isWarnEnabled()) {
-                LOG.warn("Action [#0] does not match allowed action names pattern [#1], cleaning it up!",
-                        rawActionName, allowedActionNames);
-            }
+            LOG.warn("Action [{}] does not match allowed action names pattern [{}], cleaning it up!",
+                    rawActionName, allowedActionNames);
             String cleanActionName = rawActionName;
             for (String chunk : allowedActionNames.split(rawActionName)) {
                 cleanActionName = cleanActionName.replace(chunk, "");
             }
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Cleaned action name [#0]", cleanActionName);
-            }
+            LOG.debug("Cleaned action name [{}]", cleanActionName);
             return cleanActionName;
         }
-    }
-
-    /**
-     * Drops the extension from the action name
-     *
-     * @param name The action name
-     * @return The action name without its extension
-     * @deprecated Since 2.1, use {@link #dropExtension(java.lang.String, org.apache.struts2.dispatcher.mapper.ActionMapping)} instead
-     */
-    protected String dropExtension(String name) {
-        return dropExtension(name, new ActionMapping());
     }
 
     /**
@@ -443,7 +429,7 @@ public class DefaultActionMapper implements ActionMapper {
     }
 
     /**
-     * Returns null if no extension is specified.
+     * @return  null if no extension is specified.
      */
     protected String getDefaultExtension() {
         if (extensions == null) {

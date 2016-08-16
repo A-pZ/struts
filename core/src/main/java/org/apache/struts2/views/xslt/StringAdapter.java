@@ -21,33 +21,35 @@
 
 package org.apache.struts2.views.xslt;
 
+import com.opensymphony.xwork2.util.DomHelper;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.w3c.dom.Node;
+import org.xml.sax.InputSource;
+
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.w3c.dom.Node;
-import org.xml.sax.InputSource;
-
-import com.opensymphony.xwork2.util.DomHelper;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
-
 /**
+ * <p>
  * StringAdapter adapts a Java String value to a DOM Element with the specified
  * property name containing the String's text.
- * e.g. a property <pre>String getFoo() { return "My Text!"; }</pre>
+ * e.g. a property <code>String getFoo() { return "My Text!"; }</code>
  * will appear in the result DOM as:
- * <foo>MyText!</foo>
+ * &lt;foo&gt;MyText!&lt;/foo&gt;
+ * </p>
  *
+ * <p>
  * Subclasses may override the getStringValue() method in order to use StringAdapter
  * as a simplified custom XML adapter for Java types.  A subclass can enable XML
  * parsing of the value string via the setParseStringAsXML() method and then
  * override getStringValue() to return a String containing the custom formatted XML.
- *
+ * </p>
  */
 public class StringAdapter extends AbstractAdapterElement {
 
-    private Logger log = LoggerFactory.getLogger(this.getClass());
+    private Logger log = LogManager.getLogger(this.getClass());
     boolean parseStringAsXML;
 
     public StringAdapter() {
@@ -58,13 +60,19 @@ public class StringAdapter extends AbstractAdapterElement {
     }
 
     /**
+     * <p>
      * Get the object to be adapted as a String value.
-     * <p/>
+     * </p>
+     *
+     * <p>
      * This method can be overridden by subclasses that wish to use StringAdapter
      * as a simplified customizable XML adapter for Java types. A subclass can
      * enable parsing of the value string as containing XML text via the
      * setParseStringAsXML() method and then override getStringValue() to return a
      * String containing the custom formatted XML.
+     * </p>
+     *
+     * @return the string value
      */
     protected String getStringValue() {
         return getPropertyValue().toString();
@@ -73,23 +81,23 @@ public class StringAdapter extends AbstractAdapterElement {
     protected List<Node> buildChildAdapters() {
         Node node;
         if (getParseStringAsXML()) {
-            log.debug("parsing string as xml: " + getStringValue());
+            log.debug("parsing string as xml: {}", getStringValue());
             // Parse the String to a DOM, then proxy that as our child
             node = DomHelper.parse(new InputSource(new StringReader(getStringValue())));
             node = getAdapterFactory().proxyNode(this, node);
         } else {
-            log.debug("using string as is: " + getStringValue());
+            log.debug("using string as is: {}", getStringValue());
             // Create a Text node as our child
             node = new SimpleTextNode(getAdapterFactory(), this, "text", getStringValue());
         }
 
-        List<Node> children = new ArrayList<Node>();
+        List<Node> children = new ArrayList<>();
         children.add(node);
         return children;
     }
 
     /**
-     * Is this StringAdapter to interpret its string values as containing
+     * @return is this StringAdapter to interpret its string values as containing
      * XML Text?
      *
      * @see #setParseStringAsXML(boolean)
@@ -104,7 +112,7 @@ public class StringAdapter extends AbstractAdapterElement {
      * Element will be a child of this String element. (i.e. wrapped in an
      * element of the property name specified for this StringAdapter).
      *
-     * @param parseStringAsXML
+     * @param parseStringAsXML when set to true the StringAdapter will interpret its String value as containing XML text
      * @see #getParseStringAsXML()
      */
     public void setParseStringAsXML(boolean parseStringAsXML) {

@@ -29,8 +29,7 @@ import java.util.List;
 
 
 /**
- * Abstract wrapper class HTTP requests to handle multi-part data. <p>
- *
+ * <p>Abstract wrapper class HTTP requests to handle multi-part data. </p>
  */
 public interface MultiPartRequest {
 
@@ -108,7 +107,7 @@ public interface MultiPartRequest {
      * Returns a list of error messages that may have occurred while processing the request.
      * If there are no errors, an empty list is returned. If the underlying implementation
      * (ie: pell, cos, jakarta, etc) cannot support providing these errors, an empty list is
-     * also returned. This list of errors is repoted back to the
+     * also returned. This list of errors is reported back to the
      * {@link MultiPartRequestWrapper}'s errors field.
      *
      * @return a list of Strings that represent various errors during parsing

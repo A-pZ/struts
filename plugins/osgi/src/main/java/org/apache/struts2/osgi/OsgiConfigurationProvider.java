@@ -30,8 +30,8 @@ import com.opensymphony.xwork2.config.PackageProvider;
 import com.opensymphony.xwork2.config.entities.PackageConfig;
 import com.opensymphony.xwork2.inject.Inject;
 import com.opensymphony.xwork2.util.finder.ClassLoaderInterface;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.struts2.osgi.host.OsgiHost;
 import org.apache.struts2.osgi.loaders.VelocityBundleResourceLoader;
@@ -53,7 +53,7 @@ import java.util.Set;
  */
 public class OsgiConfigurationProvider implements PackageProvider, BundleListener {
 
-    private static final Logger LOG = LoggerFactory.getLogger(OsgiConfigurationProvider.class);
+    private static final Logger LOG = LogManager.getLogger(OsgiConfigurationProvider.class);
 
     private Configuration configuration;
     private ObjectFactory objectFactory;
@@ -89,7 +89,7 @@ public class OsgiConfigurationProvider implements PackageProvider, BundleListene
             ActionContext.setContext(ctx);
         }
 
-        Set<String> bundleNames = new HashSet<String>();
+        Set<String> bundleNames = new HashSet<>();
 
         //iterate over the bundles and load packages from them
         for (Bundle bundle : osgiHost.getBundles().values()) {
@@ -112,12 +112,12 @@ public class OsgiConfigurationProvider implements PackageProvider, BundleListene
     /**
      * Loads XML config as well as Convention config from a bundle
      * Limitation: Constants and Beans are ignored on XML config
+     *
+     * @param bundle the bundle
      */
     protected void loadConfigFromBundle(Bundle bundle) {
         String bundleName = bundle.getSymbolicName();
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Loading packages from bundle [#0]", bundleName);
-        }
+        LOG.debug("Loading packages from bundle [{}]", bundleName);
 
         //init action context
         ActionContext ctx = ActionContext.getContext();
@@ -132,9 +132,7 @@ public class OsgiConfigurationProvider implements PackageProvider, BundleListene
             ctx.put(ClassLoaderInterface.CLASS_LOADER_INTERFACE, new BundleClassLoaderInterface());
             ctx.put(BundleAccessor.CURRENT_BUNDLE_NAME, bundleName);
 
-            if (LOG.isTraceEnabled()) {
-                LOG.trace("Loading XML config from bundle [#0]", bundleName);
-            }
+            LOG.trace("Loading XML config from bundle [{}]", bundleName);
 
             //XML config
             PackageLoader loader = new BundlePackageLoader();
@@ -145,12 +143,11 @@ public class OsgiConfigurationProvider implements PackageProvider, BundleListene
 
             //Convention
             //get the existing packages before reloading the provider (se we can figure out what are the new packages)
-            Set<String> packagesBeforeLoading = new HashSet<String>(configuration.getPackageConfigNames());
+            Set<String> packagesBeforeLoading = new HashSet<>(configuration.getPackageConfigNames());
 
             PackageProvider conventionPackageProvider = configuration.getContainer().getInstance(PackageProvider.class, "convention.packageProvider");
             if (conventionPackageProvider != null) {
-                if (LOG.isTraceEnabled())
-                    LOG.trace("Loading Convention config from bundle [#0]", bundleName);
+                LOG.trace("Loading Convention config from bundle [{}]", bundleName);
                 conventionPackageProvider.loadPackages();
             }
 
@@ -175,6 +172,10 @@ public class OsgiConfigurationProvider implements PackageProvider, BundleListene
 
     /**
      * Checks for "Struts2-Enabled" header in the bundle
+     *
+     * @param bundle the bundle
+     *
+     * @return true is struts2 enabled
      */
     protected boolean shouldProcessBundle(Bundle bundle) {
         // Cast to String is required on JDK7
@@ -228,6 +229,8 @@ public class OsgiConfigurationProvider implements PackageProvider, BundleListene
 
     /**
      * Listens to bundle event to load/unload config
+     *
+     * @param bundleEvent the bundle event
      */
     public void bundleChanged(BundleEvent bundleEvent) {
         Bundle bundle = bundleEvent.getBundle();
@@ -235,8 +238,7 @@ public class OsgiConfigurationProvider implements PackageProvider, BundleListene
         if (bundleName != null && shouldProcessBundle(bundle)) {
             switch (bundleEvent.getType()) {
                 case BundleEvent.STARTED:
-                    if (LOG.isTraceEnabled())
-                        LOG.trace("The bundlde [#0] has been activated and will be scanned for struts configuration", bundleName);
+                    LOG.trace("The bundle [{}] has been activated and will be scanned for struts configuration", bundleName);
                     loadConfigFromBundle(bundle);
                     break;
                 case BundleEvent.STOPPED:
@@ -255,7 +257,7 @@ public class OsgiConfigurationProvider implements PackageProvider, BundleListene
         Set<String> packages = bundleAccessor.getPackagesByBundle(bundle);
         if (!packages.isEmpty()) {
             if (LOG.isTraceEnabled()) {
-                LOG.trace("The bundle [#0] has been stopped. The packages [#1] will be disabled", bundle.getSymbolicName(), StringUtils.join(packages, ","));
+                LOG.trace("The bundle [{}] has been stopped. The packages [{}] will be disabled", bundle.getSymbolicName(), StringUtils.join(packages, ","));
             }
             for (String packageName : packages) {
                 configuration.removePackageConfig(packageName);

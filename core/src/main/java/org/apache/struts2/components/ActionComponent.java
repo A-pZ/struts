@@ -28,8 +28,8 @@ import com.opensymphony.xwork2.ActionProxyFactory;
 import com.opensymphony.xwork2.inject.Inject;
 import com.opensymphony.xwork2.util.ValueStack;
 import com.opensymphony.xwork2.util.ValueStackFactory;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.struts2.ServletActionContext;
 import org.apache.struts2.StrutsException;
 import org.apache.struts2.StrutsStatics;
@@ -47,7 +47,6 @@ import javax.servlet.jsp.PageContext;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -85,40 +84,40 @@ import java.util.Map;
  *
  * <pre>
  * <!-- START SNIPPET: strutsxml -->
- *   <xwork>
+ *   &lt;xwork&gt;
  *      ....
- *     <action name="actionTagAction1" class="tmjee.testing.ActionTagAction">
- *         <result name="done">success.jsp</result>
- *     </action>
- *      <action name="actionTagAction2" class="tmjee.testing.ActionTagAction" method="default">
- *         <result name="done">success.jsp</result>
- *     </action>
+ *     &lt;action name=&quot;actionTagAction1&quot; class=&quot;tmjee.testing.ActionTagAction&quot;&gt;
+ *         &lt;result name=&quot;done&quot;&gt;success.jsp&lt;/result&gt;
+ *     &lt;/action&gt;
+ *      &lt;action name=&quot;actionTagAction2&quot; class=&quot;tmjee.testing.ActionTagAction&quot; method=&quot;default&quot;&gt;
+ *         &lt;result name=&quot;done&quot;&gt;success.jsp&lt;/result&gt;
+ *     &lt;/action&gt;
  *      ....
- *   </xwork>
+ *   &lt;/xwork&gt;
  * <!-- END SNIPPET: strutsxml -->
  * </pre>
  *
  * <pre>
  * <!-- START SNIPPET: example -->
- *  <div>The following action tag will execute result and include it in this page</div>
- *  <br />
- *  <s:action name="actionTagAction" executeResult="true" />
- *  <br />
- *  <div>The following action tag will do the same as above, but invokes method specialMethod in action</div>
- *  <br />
- *  <s:action name="actionTagAction!specialMethod" executeResult="true" />
- *  <br />
- *  <div>The following action tag will not execute result, but put a String in request scope
- *       under an id "stringByAction" which will be retrieved using property tag</div>
- *  <s:action name="actionTagAction!default" executeResult="false" />
- *  <s:property value="#attr.stringByAction" />
+ *  <span>The following action tag will execute result and include it in this page</span>
+ *  <br>
+ *  &lt;s:action name=&quot;actionTagAction&quot; executeResult=&quot;true&quot; /&gt;
+ *  <br>
+ *  <span>The following action tag will do the same as above, but invokes method specialMethod in action</span>
+ *  <br>
+ *  &lt;s:action name=&quot;actionTagAction!specialMethod&quot; executeResult=&quot;true&quot; /&gt;
+ *  <br>
+ *  <span>The following action tag will not execute result, but put a String in request scope
+ *       under an id "stringByAction" which will be retrieved using property tag</span>
+ *  &lt;s:action name=&quot;actionTagAction!default&quot; executeResult=&quot;false&quot; /&gt;
+ *  &lt;s:property value=&quot;#attr.stringByAction&quot; /&gt;
  * <!-- END SNIPPET: example -->
  * </pre>
  *
  */
 @StrutsTag(name="action", tldTagClass="org.apache.struts2.views.jsp.ActionTag", description="Execute an action from within a view")
 public class ActionComponent extends ContextBean {
-    private static final Logger LOG = LoggerFactory.getLogger(ActionComponent.class);
+    private static final Logger LOG = LogManager.getLogger(ActionComponent.class);
 
     protected HttpServletResponse res;
     protected HttpServletRequest req;
@@ -164,16 +163,13 @@ public class ActionComponent extends ContextBean {
                 try {
                     writer.flush();
                 } catch (IOException e) {
-                    if (LOG.isWarnEnabled()) {
                 	LOG.warn("error while trying to flush writer ", e);
-                    }
                 }
             }
             executeAction();
 
             if ((getVar() != null) && (proxy != null)) {
-                getStack().setValue("#attr['" + getVar() + "']",
-                        proxy.getAction());
+                getStack().setValue("#attr['" + getVar() + "']", proxy.getAction());
             }
         } finally {
             popComponentStack();
@@ -219,14 +215,14 @@ public class ActionComponent extends ContextBean {
             parentParams = new ActionContext(getStack().getContext()).getParameters();
         }
 
-        Map<String,String[]> newParams = (parentParams != null) 
-            ? new HashMap<String,String[]>(parentParams) 
-            : new HashMap<String,String[]>();
+        Map<String, String[]> newParams = (parentParams != null)
+                ? new HashMap<String, String[]>(parentParams)
+                : new HashMap<String, String[]>();
 
         if (parameters != null) {
-            Map<String,String[]> params = new HashMap<String,String[]>();
-            for (Iterator i = parameters.entrySet().iterator(); i.hasNext(); ) {
-                Map.Entry entry = (Map.Entry) i.next();
+            Map<String, String[]> params = new HashMap<>();
+            for (Object o : parameters.entrySet()) {
+                Map.Entry entry = (Map.Entry) o;
                 String key = (String) entry.getKey();
                 Object val = entry.getValue();
                 if (val.getClass().isArray() && String.class == val.getClass().getComponentType()) {

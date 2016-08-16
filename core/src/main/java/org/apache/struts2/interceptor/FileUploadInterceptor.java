@@ -21,19 +21,14 @@
 
 package org.apache.struts2.interceptor;
 
-import com.opensymphony.xwork2.ActionContext;
-import com.opensymphony.xwork2.ActionInvocation;
-import com.opensymphony.xwork2.ActionProxy;
-import com.opensymphony.xwork2.LocaleProvider;
-import com.opensymphony.xwork2.TextProvider;
-import com.opensymphony.xwork2.TextProviderFactory;
-import com.opensymphony.xwork2.ValidationAware;
+import com.opensymphony.xwork2.*;
 import com.opensymphony.xwork2.inject.Container;
 import com.opensymphony.xwork2.inject.Inject;
 import com.opensymphony.xwork2.interceptor.AbstractInterceptor;
+import com.opensymphony.xwork2.interceptor.ValidationAware;
 import com.opensymphony.xwork2.util.TextParseUtil;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.struts2.ServletActionContext;
 import org.apache.struts2.dispatcher.multipart.MultiPartRequestWrapper;
 import org.apache.struts2.util.ContentTypeMatcher;
@@ -41,90 +36,85 @@ import org.apache.struts2.util.ContentTypeMatcher;
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * <!-- START SNIPPET: description -->
- * <p/>
+ * <p>
  * Interceptor that is based off of {@link MultiPartRequestWrapper}, which is automatically applied for any request that
  * includes a file. It adds the following parameters, where [File Name] is the name given to the file uploaded by the
  * HTML form:
- * <p/>
+ * </p>
  * <ul>
- * <p/>
+ *
  * <li>[File Name] : File - the actual File</li>
- * <p/>
+ *
  * <li>[File Name]ContentType : String - the content type of the file</li>
- * <p/>
+ *
  * <li>[File Name]FileName : String - the actual name of the file uploaded (not the HTML name)</li>
- * <p/>
+ *
  * </ul>
- * <p/>
- * <p/> You can get access to these files by merely providing setters in your action that correspond to any of the three
+ *
+ * <p>You can get access to these files by merely providing setters in your action that correspond to any of the three
  * patterns above, such as setDocument(File document), setDocumentContentType(String contentType), etc.
- * <br/>See the example code section.
- * <p/>
- * <p/> This interceptor will add several field errors, assuming that the action implements {@link ValidationAware}.
+ * <br>See the example code section.
+ * </p>
+ *
+ * <p> This interceptor will add several field errors, assuming that the action implements {@link ValidationAware}.
  * These error messages are based on several i18n values stored in struts-messages.properties, a default i18n file
  * processed for all i18n requests. You can override the text of these messages by providing text for the following
  * keys:
- * <p/>
+ * </p>
+ *
  * <ul>
- * <p/>
+ *
  * <li>struts.messages.error.uploading - a general error that occurs when the file could not be uploaded</li>
- * <p/>
+ *
  * <li>struts.messages.error.file.too.large - occurs when the uploaded file is too large</li>
- * <p/>
+ *
  * <li>struts.messages.error.content.type.not.allowed - occurs when the uploaded file does not match the expected
  * content types specified</li>
- * <p/>
+ *
  * <li>struts.messages.error.file.extension.not.allowed - occurs when the uploaded file does not match the expected
  * file extensions specified</li>
- * <p/>
+ *
  * </ul>
- * <p/>
+ *
  * <!-- END SNIPPET: description -->
- * <p/>
- * <p/> <u>Interceptor parameters:</u>
- * <p/>
+ *
+ * <p><u>Interceptor parameters:</u></p>
+ *
  * <!-- START SNIPPET: parameters -->
- * <p/>
+ *
  * <ul>
- * <p/>
+ *
  * <li>maximumSize (optional) - the maximum size (in bytes) that the interceptor will allow a file reference to be set
  * on the action. Note, this is <b>not</b> related to the various properties found in struts.properties.
  * Default to approximately 2MB.</li>
- * <p/>
+ *
  * <li>allowedTypes (optional) - a comma separated list of content types (ie: text/html) that the interceptor will allow
  * a file reference to be set on the action. If none is specified allow all types to be uploaded.</li>
- * <p/>
+ *
  * <li>allowedExtensions (optional) - a comma separated list of file extensions (ie: .html) that the interceptor will allow
  * a file reference to be set on the action. If none is specified allow all extensions to be uploaded.</li>
  * </ul>
- * <p/>
- * <p/>
+ *
+ *
  * <!-- END SNIPPET: parameters -->
- * <p/>
- * <p/> <u>Extending the interceptor:</u>
- * <p/>
- * <p/>
- * <p/>
+ *
+ * <p><u>Extending the interceptor:</u></p>
+ *
+ *
+ *
  * <!-- START SNIPPET: extending -->
- * <p/>
+ * <p>
  * You can extend this interceptor and override the acceptFile method to provide more control over which files
  * are supported and which are not.
- * <p/>
+ * </p>
  * <!-- END SNIPPET: extending -->
- * <p/>
- * <p/> <u>Example code:</u>
- * <p/>
+ *
+ * <p><u>Example code:</u></p>
+ *
  * <pre>
  * <!-- START SNIPPET: example-configuration -->
  * &lt;action name="doUpload" class="com.example.UploadAction"&gt;
@@ -134,13 +124,13 @@ import java.util.Set;
  * &lt;/action&gt;
  * <!-- END SNIPPET: example-configuration -->
  * </pre>
- * <p/>
+ *
  * <!-- START SNIPPET: multipart-note -->
- * <p/>
+ * <p>
  * You must set the encoding to <code>multipart/form-data</code> in the form where the user selects the file to upload.
- * <p/>
+ * </p>
  * <!-- END SNIPPET: multipart-note -->
- * <p/>
+ *
  * <pre>
  * <!-- START SNIPPET: example-form -->
  *   &lt;s:form action="doUpload" method="post" enctype="multipart/form-data"&gt;
@@ -149,10 +139,11 @@ import java.util.Set;
  *   &lt;/s:form&gt;
  * <!-- END SNIPPET: example-form -->
  * </pre>
- * <p/>
+ * <p>
  * And then in your action code you'll have access to the File object if you provide setters according to the
  * naming convention documented in the start.
- * <p/>
+ * </p>
+ *
  * <pre>
  * <!-- START SNIPPET: example-action -->
  *    package com.example;
@@ -189,7 +180,7 @@ public class FileUploadInterceptor extends AbstractInterceptor {
 
     private static final long serialVersionUID = -4764627478894962478L;
 
-    protected static final Logger LOG = LoggerFactory.getLogger(FileUploadInterceptor.class);
+    protected static final Logger LOG = LogManager.getLogger(FileUploadInterceptor.class);
 
     protected Long maximumSize;
     protected Set<String> allowedTypesSet = Collections.emptySet();
@@ -288,9 +279,9 @@ public class FileUploadInterceptor extends AbstractInterceptor {
                     // get a File object for the uploaded File
                     File[] files = multiWrapper.getFiles(inputName);
                     if (files != null && files.length > 0) {
-                        List<File> acceptedFiles = new ArrayList<File>(files.length);
-                        List<String> acceptedContentTypes = new ArrayList<String>(files.length);
-                        List<String> acceptedFileNames = new ArrayList<String>(files.length);
+                        List<File> acceptedFiles = new ArrayList<>(files.length);
+                        List<String> acceptedContentTypes = new ArrayList<>(files.length);
+                        List<String> acceptedFileNames = new ArrayList<>(files.length);
                         String contentTypeName = inputName + "ContentType";
                         String fileNameName = inputName + "FileName";
 
@@ -331,6 +322,7 @@ public class FileUploadInterceptor extends AbstractInterceptor {
      *
      * @param action      - uploading action for message retrieval.
      * @param file        - proposed upload file.
+     * @param filename    - name of the file.
      * @param contentType - contentType of the file.
      * @param inputName   - inputName of the file.
      * @param validation  - Non-null ValidationAware if the action implements ValidationAware, allowing for better

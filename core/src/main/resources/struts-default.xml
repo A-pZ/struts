@@ -33,8 +33,8 @@
     and {@link com.opensymphony.xwork2.inject.Inject}
 -->
 <!DOCTYPE struts PUBLIC
-    "-//Apache Software Foundation//DTD Struts Configuration 2.3//EN"
-    "http://struts.apache.org/dtds/struts-2.3.dtd">
+    "-//Apache Software Foundation//DTD Struts Configuration 2.5//EN"
+    "http://struts.apache.org/dtds/struts-2.5.dtd">
 
 <struts>
 
@@ -46,13 +46,19 @@
                 java.lang.Class,
                 java.lang.ClassLoader,
                 java.lang.Shutdown,
+                java.lang.ProcessBuilder,
                 ognl.OgnlContext,
-                ognl.MemberAccess,
                 ognl.ClassResolver,
                 ognl.TypeConverter,
+                com.opensymphony.xwork2.ognl.SecurityMemberAccess,
                 com.opensymphony.xwork2.ActionContext" />
+
     <!-- this must be valid regex, each '.' in package name must be escaped! -->
-    <constant name="struts.excludedPackageNamePatterns" value="^java\.lang\..*,^ognl.*,^(?!javax\.servlet\..+)(javax\..+)" />
+    <!-- it's more flexible but slower than simple string comparison -->
+    <!-- constant name="struts.excludedPackageNamePatterns" value="^java\.lang\..*,^ognl.*,^(?!javax\.servlet\..+)(javax\..+)" / -->
+
+    <!-- this is simpler version of the above used with string comparison -->
+    <constant name="struts.excludedPackageNames" value="java.lang.,ognl,javax" />
 
     <bean class="com.opensymphony.xwork2.ObjectFactory" name="struts"/>
     <bean type="com.opensymphony.xwork2.factory.ResultFactory" name="struts" class="org.apache.struts2.factory.StrutsResultFactory" />
@@ -65,8 +71,8 @@
     <bean type="com.opensymphony.xwork2.FileManager" class="com.opensymphony.xwork2.util.fs.DefaultFileManager" name="system" scope="singleton"/>
     <bean type="com.opensymphony.xwork2.FileManagerFactory" class="com.opensymphony.xwork2.util.fs.DefaultFileManagerFactory" name="struts" scope="singleton"/>
 
-    <bean type="com.opensymphony.xwork2.ActionProxyFactory" name="struts" class="org.apache.struts2.impl.StrutsActionProxyFactory"/>
-    <bean type="com.opensymphony.xwork2.ActionProxyFactory" name="prefix" class="org.apache.struts2.impl.PrefixBasedActionProxyFactory"/>
+    <bean type="com.opensymphony.xwork2.ActionProxyFactory" name="struts" class="org.apache.struts2.factory.StrutsActionProxyFactory"/>
+    <bean type="com.opensymphony.xwork2.ActionProxyFactory" name="prefix" class="org.apache.struts2.factory.PrefixBasedActionProxyFactory"/>
 
     <bean type="com.opensymphony.xwork2.conversion.ObjectTypeDeterminer" name="struts" class="com.opensymphony.xwork2.conversion.impl.DefaultObjectTypeDeterminer"/>
 
@@ -81,8 +87,8 @@
     <bean type="org.apache.struts2.dispatcher.mapper.ActionMapper" name="restful" class="org.apache.struts2.dispatcher.mapper.RestfulActionMapper" />
     <bean type="org.apache.struts2.dispatcher.mapper.ActionMapper" name="restful2" class="org.apache.struts2.dispatcher.mapper.Restful2ActionMapper" />
 
-    <bean type="org.apache.struts2.dispatcher.multipart.MultiPartRequest" name="jakarta" class="org.apache.struts2.dispatcher.multipart.JakartaMultiPartRequest" scope="default"/>
-    <bean type="org.apache.struts2.dispatcher.multipart.MultiPartRequest" name="jakarta-stream" class="org.apache.struts2.dispatcher.multipart.JakartaStreamMultiPartRequest" scope="default"/>
+    <bean type="org.apache.struts2.dispatcher.multipart.MultiPartRequest" name="jakarta" class="org.apache.struts2.dispatcher.multipart.JakartaMultiPartRequest" scope="prototype"/>
+    <bean type="org.apache.struts2.dispatcher.multipart.MultiPartRequest" name="jakarta-stream" class="org.apache.struts2.dispatcher.multipart.JakartaStreamMultiPartRequest" scope="prototype"/>
 
     <bean type="org.apache.struts2.views.TagLibraryDirectiveProvider" name="s" class="org.apache.struts2.views.DefaultTagLibrary" />
     <bean type="org.apache.struts2.views.TagLibraryModelProvider" name="s" class="org.apache.struts2.views.DefaultTagLibrary" />
@@ -112,7 +118,7 @@
     <bean type="com.opensymphony.xwork2.conversion.impl.NumberConverter" name="struts" class="com.opensymphony.xwork2.conversion.impl.NumberConverter" scope="singleton"/>
     <bean type="com.opensymphony.xwork2.conversion.impl.StringConverter" name="struts" class="com.opensymphony.xwork2.conversion.impl.StringConverter" scope="singleton"/>
 
-    <bean type="com.opensymphony.xwork2.TextProvider" name="struts" class="com.opensymphony.xwork2.TextProviderSupport" scope="default" />
+    <bean type="com.opensymphony.xwork2.TextProvider" name="struts" class="com.opensymphony.xwork2.TextProviderSupport" scope="prototype" />
     <bean type="com.opensymphony.xwork2.LocaleProvider" name="struts" class="com.opensymphony.xwork2.DefaultLocaleProvider" scope="singleton" />
 
     <bean type="org.apache.struts2.components.UrlRenderer" name="struts" class="org.apache.struts2.components.ServletUrlRenderer"/>
@@ -162,22 +168,22 @@
     <bean type="ognl.PropertyAccessor" name="java.util.HashSet" class="com.opensymphony.xwork2.ognl.accessor.XWorkCollectionPropertyAccessor" />
     <bean type="ognl.PropertyAccessor" name="java.util.HashMap" class="com.opensymphony.xwork2.ognl.accessor.XWorkMapPropertyAccessor" />
 
-    <bean type="com.opensymphony.xwork2.security.ExcludedPatternsChecker" name="struts" class="com.opensymphony.xwork2.security.DefaultExcludedPatternsChecker" scope="default" />
-    <bean type="com.opensymphony.xwork2.security.AcceptedPatternsChecker" name="struts" class="com.opensymphony.xwork2.security.DefaultAcceptedPatternsChecker" scope="default" />
+    <bean type="com.opensymphony.xwork2.security.ExcludedPatternsChecker" name="struts" class="com.opensymphony.xwork2.security.DefaultExcludedPatternsChecker" scope="prototype" />
+    <bean type="com.opensymphony.xwork2.security.AcceptedPatternsChecker" name="struts" class="com.opensymphony.xwork2.security.DefaultAcceptedPatternsChecker" scope="prototype" />
 
-    <package name="struts-default" abstract="true">
+    <package name="struts-default" abstract="true" strict-method-invocation="true">
         <result-types>
             <result-type name="chain" class="com.opensymphony.xwork2.ActionChainResult"/>
-            <result-type name="dispatcher" class="org.apache.struts2.dispatcher.ServletDispatcherResult" default="true"/>
+            <result-type name="dispatcher" class="org.apache.struts2.result.ServletDispatcherResult" default="true"/>
             <result-type name="freemarker" class="org.apache.struts2.views.freemarker.FreemarkerResult"/>
-            <result-type name="httpheader" class="org.apache.struts2.dispatcher.HttpHeaderResult"/>
-            <result-type name="redirect" class="org.apache.struts2.dispatcher.ServletRedirectResult"/>
-            <result-type name="redirectAction" class="org.apache.struts2.dispatcher.ServletActionRedirectResult"/>
-            <result-type name="stream" class="org.apache.struts2.dispatcher.StreamResult"/>
-            <result-type name="velocity" class="org.apache.struts2.dispatcher.VelocityResult"/>
+            <result-type name="httpheader" class="org.apache.struts2.result.HttpHeaderResult"/>
+            <result-type name="redirect" class="org.apache.struts2.result.ServletRedirectResult"/>
+            <result-type name="redirectAction" class="org.apache.struts2.result.ServletActionRedirectResult"/>
+            <result-type name="stream" class="org.apache.struts2.result.StreamResult"/>
+            <result-type name="velocity" class="org.apache.struts2.result.VelocityResult"/>
             <result-type name="xslt" class="org.apache.struts2.views.xslt.XSLTResult"/>
-            <result-type name="plainText" class="org.apache.struts2.dispatcher.PlainTextResult" />
-            <result-type name="postback" class="org.apache.struts2.dispatcher.PostbackResult" />
+            <result-type name="plainText" class="org.apache.struts2.result.PlainTextResult" />
+            <result-type name="postback" class="org.apache.struts2.result.PostbackResult" />
         </result-types>
 
         <interceptors>
@@ -215,7 +221,6 @@
             <interceptor name="roles" class="org.apache.struts2.interceptor.RolesInterceptor" />
             <interceptor name="annotationWorkflow" class="com.opensymphony.xwork2.interceptor.annotations.AnnotationWorkflowInterceptor" />
             <interceptor name="multiselect" class="org.apache.struts2.interceptor.MultiselectInterceptor" />
-            <interceptor name="deprecation" class="org.apache.struts2.interceptor.DeprecationInterceptor" />
 
             <!-- Basic stack -->
             <interceptor-stack name="basicStack">
@@ -226,11 +231,8 @@
                 <interceptor-ref name="datetime"/>
                 <interceptor-ref name="multiselect"/>
                 <interceptor-ref name="actionMappingParams"/>
-                <interceptor-ref name="params">
-                    <param name="excludeParams">^action:.*,^method:.*</param>
-                </interceptor-ref>
+                <interceptor-ref name="params"/>
                 <interceptor-ref name="conversionError"/>
-                <interceptor-ref name="deprecation"/>
             </interceptor-stack>
 
             <!-- Sample validation and workflow stack -->
@@ -283,9 +285,7 @@
                 <interceptor-ref name="checkbox"/>
                 <interceptor-ref name="datetime"/>
                 <interceptor-ref name="multiselect"/>
-                <interceptor-ref name="params">
-                    <param name="excludeParams">^action:.*,^method:.*</param>
-                </interceptor-ref>
+                <interceptor-ref name="params"/>
                 <interceptor-ref name="servletConfig"/>
                 <interceptor-ref name="prepare"/>
                 <interceptor-ref name="chain"/>
@@ -293,9 +293,7 @@
                 <interceptor-ref name="fileUpload"/>
                 <interceptor-ref name="staticParams"/>
                 <interceptor-ref name="actionMappingParams"/>
-                <interceptor-ref name="params">
-                    <param name="excludeParams">^action:.*,^method:.*</param>
-                </interceptor-ref>
+                <interceptor-ref name="params"/>
                 <interceptor-ref name="conversionError"/>
                 <interceptor-ref name="validation">
                     <param name="excludeMethods">input,back,cancel,browse</param>
@@ -331,9 +329,7 @@
                 <interceptor-ref name="multiselect"/>
                 <interceptor-ref name="staticParams"/>
                 <interceptor-ref name="actionMappingParams"/>
-                <interceptor-ref name="params">
-                    <param name="excludeParams">^action:.*,^method:.*</param>
-                </interceptor-ref>
+                <interceptor-ref name="params"/>
                 <interceptor-ref name="conversionError"/>
                 <interceptor-ref name="validation">
                     <param name="excludeMethods">input,back,cancel,browse</param>
@@ -342,7 +338,6 @@
                     <param name="excludeMethods">input,back,cancel,browse</param>
                 </interceptor-ref>
                 <interceptor-ref name="debugging"/>
-                <interceptor-ref name="deprecation"/>
             </interceptor-stack>
 
             <!-- The completeStack is here for backwards compatibility for
@@ -369,6 +364,9 @@
         <default-interceptor-ref name="defaultStack"/>
 
         <default-class-ref class="com.opensymphony.xwork2.ActionSupport" />
+
+        <global-allowed-methods>execute,input,back,cancel,browse,save,delete,list,index</global-allowed-methods>
+
     </package>
 
 </struts>

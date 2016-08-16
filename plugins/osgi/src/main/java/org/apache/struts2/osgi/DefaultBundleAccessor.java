@@ -25,8 +25,8 @@ import com.opensymphony.xwork2.ActionContext;
 import com.opensymphony.xwork2.ActionInvocation;
 import com.opensymphony.xwork2.ActionProxy;
 import com.opensymphony.xwork2.config.entities.ActionConfig;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import org.apache.struts2.osgi.host.OsgiHost;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -50,11 +50,11 @@ import java.util.Set;
 public class DefaultBundleAccessor implements BundleAccessor {
 
     private static DefaultBundleAccessor self;
-    private static final Logger LOG = LoggerFactory.getLogger(DefaultBundleAccessor.class);
+    private static final Logger LOG = LogManager.getLogger(DefaultBundleAccessor.class);
 
     private BundleContext bundleContext;
-    private Map<String, String> packageToBundle = new HashMap<String, String>();
-    private Map<Bundle, Set<String>> packagesByBundle = new HashMap<Bundle, Set<String>>();
+    private Map<String, String> packageToBundle = new HashMap<>();
+    private Map<Bundle, Set<String>> packagesByBundle = new HashMap<>();
     private OsgiHost osgiHost;
 
     public DefaultBundleAccessor() {
@@ -79,8 +79,9 @@ public class DefaultBundleAccessor implements BundleAccessor {
                 return bundleContext.getServiceReferences(className, null);
             } catch (InvalidSyntaxException e) {
                 //cannot happen we are passing null as the param
-                if (LOG.isErrorEnabled())
+                if (LOG.isErrorEnabled()) {
                     LOG.error("Invalid syntax for service lookup", e);
+                }
             }
         }
 
@@ -92,7 +93,7 @@ public class DefaultBundleAccessor implements BundleAccessor {
     }
 
     /**
-     *  Add as Bundle -> Package mapping 
+     *  Add as Bundle -&gt; Package mapping
      * @param bundle the bundle where the package was loaded from
      * @param packageName the anme of the loaded package
      */
@@ -100,7 +101,7 @@ public class DefaultBundleAccessor implements BundleAccessor {
         this.packageToBundle.put(packageName, bundle.getSymbolicName());
         Set<String> pkgs = packagesByBundle.get(bundle);
         if (pkgs == null) {
-            pkgs = new HashSet<String>();
+            pkgs = new HashSet<>();
             packagesByBundle.put(bundle, pkgs);
         }
         pkgs.add(packageName);
@@ -110,8 +111,7 @@ public class DefaultBundleAccessor implements BundleAccessor {
         Bundle bundle = getCurrentBundle();
         if (bundle != null) {
             Class cls = bundle.loadClass(className);
-            if (LOG.isTraceEnabled())
-                LOG.trace("Located class [#0] in bundle [#1]", className, bundle.getSymbolicName());
+            LOG.trace("Located class [{}] in bundle [{}]", className, bundle.getSymbolicName());
             return cls;
         }
 
@@ -140,7 +140,7 @@ public class DefaultBundleAccessor implements BundleAccessor {
     public List<URL> loadResources(String name, boolean translate) throws IOException {
         Bundle bundle = getCurrentBundle();
         if (bundle != null) {
-            List<URL> resources = new ArrayList<URL>();
+            List<URL> resources = new ArrayList<>();
             Enumeration e = bundle.getResources(name);
             if (e != null) {
                 while (e.hasMoreElements()) {

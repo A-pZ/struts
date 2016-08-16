@@ -30,18 +30,19 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * <!-- START SNIPPET: javadoc -->
- * Render a radio button input field.</p>
+ * <p>Render a radio button input field.</p>
  * <!-- END SNIPPET: javadoc -->
  *
- * <p/> <b>Examples</b>
- * <p/>
+ * <p><b>Examples</b></p>
+ * <p>
  * <!-- START SNIPPET: exdescription -->
  * In this example, a radio control is displayed with a list of genders. The gender list is built from attribute
  * id=genders. The framework calls getGenders() which will return a Map. For examples using listKey and listValue attributes,
  * see the section select tag. The default selected one will be determined (in this case) by the getMale() method
- * in the action class which should retun a value similar to the key of the getGenters() map if that particular
- * gender is to be selected.<p/>
+ * in the action class which should return a value similar to the key of the getGenders() map if that particular
+ * gender is to be selected.
  * <!-- END SNIPPET: exdescription -->
+ * </p>
  * <pre>
  * <!-- START SNIPPET: example -->
  * &lt;s:action name="GenderMap" var="genders"/&gt;
@@ -51,7 +52,7 @@ import javax.servlet.http.HttpServletResponse;
  * <!-- START SNIPPET: example_fmt -->
  * &lt;@s.radio name="car" list={"ford": "Ford Motor Co", "toyota": "Toyota"} listKey="key" listValue="value" /&gt;
  * <!-- END SNIPPET: example_fmt -->
- *
+ * </pre>
  */
 @StrutsTag(name="radio",
         tldTagClass="org.apache.struts2.views.jsp.ui.RadioTag",
@@ -60,8 +61,6 @@ import javax.servlet.http.HttpServletResponse;
 public class Radio extends ListUIBean {
     final public static String TEMPLATE = "radiomap";
     
-    protected String readonly;
-
     public Radio(ValueStack stack, HttpServletRequest request, HttpServletResponse response) {
         super(stack, request, response);
     }
@@ -72,14 +71,5 @@ public class Radio extends ListUIBean {
     
     public void evaluateExtraParams() {
     	super.evaluateExtraParams();
-        
-        if (readonly != null) {
-            addParameter("readonly", findValue(readonly, Boolean.class));
-        }
-    }
-    
-    @StrutsTagAttribute(description="Whether the input is readonly", type="Boolean", defaultValue="false")
-    public void setReadonly(String readonly) {
-        this.readonly = readonly;
     }
 }

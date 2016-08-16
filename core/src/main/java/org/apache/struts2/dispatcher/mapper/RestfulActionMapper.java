@@ -22,12 +22,12 @@
 package org.apache.struts2.dispatcher.mapper;
 
 import com.opensymphony.xwork2.config.ConfigurationManager;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.struts2.RequestUtils;
+import org.apache.struts2.util.URLDecoderUtil;
 
 import javax.servlet.http.HttpServletRequest;
-import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -35,10 +35,10 @@ import java.util.StringTokenizer;
 /**
  * Simple Restfull Action Mapper to support REST application
  * See docs for more information
- * http://struts.apache.org/2.x/docs/restfulactionmapper.html
+ * http://struts.apache.org/docs/restfulactionmapper.html
  */
 public class RestfulActionMapper implements ActionMapper {
-    protected static final Logger LOG = LoggerFactory.getLogger(RestfulActionMapper.class);
+    protected static final Logger LOG = LogManager.getLogger(RestfulActionMapper.class);
 
     /* (non-Javadoc)
      * @see org.apache.struts2.dispatcher.mapper.ActionMapper#getMapping(javax.servlet.http.HttpServletRequest)
@@ -52,7 +52,7 @@ public class RestfulActionMapper implements ActionMapper {
         }
 
         String actionName = uri.substring(1, nextSlash);
-        Map<String, Object> parameters = new HashMap<String, Object>();
+        Map<String, Object> parameters = new HashMap<>();
         try {
             StringTokenizer st = new StringTokenizer(uri.substring(nextSlash), "/");
             boolean isNameTok = true;
@@ -67,10 +67,10 @@ public class RestfulActionMapper implements ActionMapper {
 
             while (st.hasMoreTokens()) {
                 if (isNameTok) {
-                    paramName = URLDecoder.decode(st.nextToken(), "UTF-8");
+                    paramName = URLDecoderUtil.decode(st.nextToken(), "UTF-8");
                     isNameTok = false;
                 } else {
-                    paramValue = URLDecoder.decode(st.nextToken(), "UTF-8");
+                    paramValue = URLDecoderUtil.decode(st.nextToken(), "UTF-8");
 
                     if ((paramName != null) && (paramName.length() > 0)) {
                         parameters.put(paramName, paramValue);
@@ -80,9 +80,7 @@ public class RestfulActionMapper implements ActionMapper {
                 }
             }
         } catch (Exception e) {
-            if (LOG.isWarnEnabled()) {
         	LOG.warn("Cannot determine url parameters", e);
-            }
         }
 
         return new ActionMapping(actionName, "", "", parameters);

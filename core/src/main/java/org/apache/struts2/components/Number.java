@@ -26,8 +26,8 @@ package org.apache.struts2.components;
 
 import com.opensymphony.xwork2.ActionContext;
 import com.opensymphony.xwork2.util.ValueStack;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import org.apache.struts2.views.annotations.StrutsTag;
 import org.apache.struts2.views.annotations.StrutsTagAttribute;
 
@@ -38,23 +38,32 @@ import java.util.Currency;
 
 /**
  * <!-- START SNIPPET: javadoc -->
- * <p/>
+ * <p>
  * Format Number object in different ways.
+ * </p>
+ *
  * <p>
  * The number tag will allow you to format a Number in a quick and easy way,
  * based on the java.text.NumberFormat class. There are four basic number types,
  * a number, a currency, a percentage and an integer. If a currency is
  * specified, the number format will match the given currency. Further
  * parameters can be overridden as needed.
- * <p/>
+ * </p>
+ *
+ * <p>
  * If a type is not defined, it will finally fall back to the default
  * NumberFormat.getNumberInstance() formatting.
- * <p/>
+ * </p>
+ *
+ * <p>
  * <b>Note</b>: If the requested Number object isn't found on the stack, a blank
  * will be returned.
  * </p>
- * <p/>
- * Configurable attributes are :-
+ *
+ * <p>
+ * Configurable attributes are:
+ * </p>
+ *
  * <ul>
  * <li>name</li>
  * <li>currency - you can specify your own currency or as an OGNL expression</li>
@@ -67,10 +76,12 @@ import java.util.Currency;
  * <li>parseIntegerOnly - see NumberFormat.isParseIntegerOnly</li>
  * <li>roundingMode - see below</li>
  * </ul>
- * <p/>
- * <p/>
- * <p/>
- * Possible values for rounding mode are :-
+ *
+ *
+ * <p>
+ * Possible values for rounding mode are:
+ * </p>
+ *
  * <ul>
  * <li>ceiling</li>
  * <li>down</li>
@@ -81,14 +92,11 @@ import java.util.Currency;
  * <li>unnecessary</li>
  * <li>up</li>
  * </ul>
- * <p/>
- * <p/>
- * <p/>
+ *
  * <!-- END SNIPPET: javadoc -->
- * <p/>
- * <p/>
- * <b>Examples</b>
- * <p/>
+ *
+ * <p><b>Examples</b></p>
+ *
  * <pre>
  *  &lt;!-- START SNIPPET: example --&gt;
  *  &lt;s:number name=&quot;invoice.total&quot; type=&quot;currency&quot; currency=&quot;XYZ&quot; /&gt;
@@ -97,13 +105,15 @@ import java.util.Currency;
  *  &lt;s:number name=&quot;invoice.terms&quot; type=&quot;integer&quot; /&gt;
  *  &lt;!-- END SNIPPET: example --&gt;
  * </pre>
- * <p/>
+ *
+ * <p>
  * <code>Number</code>
+ * </p>
  */
 @StrutsTag(name = "number", tldBodyContent = "empty", tldTagClass = "org.apache.struts2.views.jsp.NumberTag", description = "Render a formatted number.")
 public class Number extends ContextBean {
 
-    private static final Logger LOG = LoggerFactory.getLogger(Number.class);
+    private static final Logger LOG = LogManager.getLogger(Number.class);
     /**
      * Property name to fall back when no format is specified
      */

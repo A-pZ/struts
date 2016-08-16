@@ -23,8 +23,8 @@ package org.apache.struts2.osgi.host;
 import com.opensymphony.xwork2.FileManager;
 import com.opensymphony.xwork2.FileManagerFactory;
 import com.opensymphony.xwork2.util.finder.ResourceFinder;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import org.apache.commons.lang.StringUtils;
 import org.apache.felix.main.AutoProcessor;
 import org.apache.felix.shell.ShellService;
@@ -58,7 +58,7 @@ import java.util.regex.Pattern;
  */
 public abstract class BaseOsgiHost implements OsgiHost {
 
-    private static final Logger LOG = LoggerFactory.getLogger(BaseOsgiHost.class);
+    private static final Logger LOG = LogManager.getLogger(BaseOsgiHost.class);
 
     protected static final Pattern versionPattern = Pattern.compile("([\\d])+[\\.-]");
 
@@ -71,6 +71,8 @@ public abstract class BaseOsgiHost implements OsgiHost {
     /**
      * This bundle map will not change, but the status of the bundles can change over time.
      * Use getActiveBundles() for active bundles
+     *
+     * @return map with bundles
      */
     public abstract Map<String, Bundle> getBundles();
 
@@ -85,7 +87,7 @@ public abstract class BaseOsgiHost implements OsgiHost {
      *
      * @param paramName    the name of the param to get from the ServletContext
      * @param defaultValue value to return if the param is not set
-     * @return
+     * @return param from the ServletContext, returning the default value if the param is not set
      */
     protected String getServletContextParam(String paramName, String defaultValue) {
         return StringUtils.defaultString(this.servletContext.getInitParameter(paramName), defaultValue);
@@ -119,7 +121,8 @@ public abstract class BaseOsgiHost implements OsgiHost {
     }
 
     /**
-     * Return a list of directories under a directory whose name is a number
+     * @param dir directory
+     * @return  a list of directories under a directory whose name is a number
      */
     protected Map<String, String> getRunLevelDirs(String dir) {
         Map<String, String> dirs = new HashMap<String, String>();
@@ -145,19 +148,17 @@ public abstract class BaseOsgiHost implements OsgiHost {
                         for (String runLevel : runLevelDirs) {
                             dirs.put(runLevel, StringUtils.chomp(dir,  "/") + "/" + runLevel);
                         }
-                    } else if (LOG.isDebugEnabled()) {
-                        LOG.debug("No run level directories found under the [#0] directory", dir);
+                    } else {
+                        LOG.debug("No run level directories found under the [{}] directory", dir);
                     }
-                } else if (LOG.isWarnEnabled()) {
-                    LOG.warn("Unable to read [#0] directory", dir);
+                } else {
+                    LOG.warn("Unable to read [{}] directory", dir);
                 }
-            } else if (LOG.isWarnEnabled()) {
-                LOG.warn("The [#0] directory was not found", dir);
+            } else {
+                LOG.warn("The [{}] directory was not found", dir);
             }
         } catch (Exception e) {
-            if (LOG.isWarnEnabled()) {
-                LOG.warn("Unable load bundles from the [#0] directory", e, dir);
-            }
+            LOG.warn("Unable load bundles from the [{}] directory", dir, e);
         }
         return dirs;
     }
@@ -180,25 +181,21 @@ public abstract class BaseOsgiHost implements OsgiHost {
                         //add all the bundles to the list
                         for (File bundle : bundles) {
                             String externalForm = bundle.toURI().toURL().toExternalForm();
-                            if (LOG.isDebugEnabled()) {
-                                LOG.debug("Adding bundle [#0]", externalForm);
-                            }
+                            LOG.debug("Adding bundle [{}]", externalForm);
                             bundleJars.add(externalForm);
                         }
 
-                    } else if (LOG.isDebugEnabled()) {
-                        LOG.debug("No bundles found under the [#0] directory", dir);
+                    } else {
+                        LOG.debug("No bundles found under the [{}] directory", dir);
                     }
-                } else if (LOG.isWarnEnabled()) {
-                    LOG.warn("Unable to read [#0] directory", dir);
+                } else {
+                    LOG.warn("Unable to read [{}] directory", dir);
                 }
-            } else if (LOG.isWarnEnabled()) {
-                LOG.warn("The [#0] directory was not found", dir);
+            } else {
+                LOG.warn("The [{}] directory was not found", dir);
             }
         } catch (Exception e) {
-            if (LOG.isWarnEnabled()) {
-                LOG.warn("Unable load bundles from the [#0] directory", e, dir);
-            }
+            LOG.warn("Unable load bundles from the [{}] directory", dir, e);
         }
         return bundleJars;
     }
@@ -254,9 +251,7 @@ public abstract class BaseOsgiHost implements OsgiHost {
                     }
                 }
             } catch (IOException e) {
-                if (LOG.isErrorEnabled()) {
-                    LOG.error("Unable to find subpackages of [#0]", e, rootPackage);
-                }
+                LOG.error("Unable to find subpackages of [{}]", rootPackage, e);
             }
         }
 
@@ -269,7 +264,8 @@ public abstract class BaseOsgiHost implements OsgiHost {
     }
 
     /**
-     * Gets the version used to export the packages. it tries to get it from MANIFEST.MF, or the file name
+     * @param url URL for package
+     * @return  the version used to export the packages. it tries to get it from MANIFEST.MF, or the file name
      */
     protected String getVersion(URL url) {
         if ("jar".equals(url.getProtocol())) {
@@ -287,16 +283,15 @@ public abstract class BaseOsgiHost implements OsgiHost {
                     return getVersionFromString(jarFile.getName());
                 }
             } catch (Exception e) {
-                if (LOG.isErrorEnabled()) {
-                    LOG.error("Unable to extract version from [#0], defaulting to '1.0.0'", url.toExternalForm());
-                }
+                LOG.error("Unable to extract version from [{}], defaulting to '1.0.0'", url.toExternalForm());
             }
         }
         return "1.0.0";
     }
 
     /**
-     * Extracts numbers followed by "." or "-" from the string and joins them with "."
+     * @param str string for extract version
+     * @return Extracts numbers followed by "." or "-" from the string and joins them with "."
      */
     protected String getVersionFromString(String str) {
         Matcher matcher = versionPattern.matcher(str);

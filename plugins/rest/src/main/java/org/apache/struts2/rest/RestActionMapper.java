@@ -25,8 +25,9 @@ import com.opensymphony.xwork2.config.Configuration;
 import com.opensymphony.xwork2.config.ConfigurationManager;
 import com.opensymphony.xwork2.config.entities.PackageConfig;
 import com.opensymphony.xwork2.inject.Inject;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.struts2.RequestUtils;
 import org.apache.struts2.StrutsConstants;
 import org.apache.struts2.dispatcher.mapper.ActionMapping;
@@ -79,14 +80,14 @@ import java.util.HashMap;
  * The following URL's will invoke its methods:
  * </p>
  * <ul> 
- *  <li><code>GET:    /movies                => method="index"</code></li>
- *  <li><code>GET:    /movies/Thrillers      => method="show", id="Thrillers"</code></li>
- *  <li><code>GET:    /movies/Thrillers;edit => method="edit", id="Thrillers"</code></li>
- *  <li><code>GET:    /movies/Thrillers/edit => method="edit", id="Thrillers"</code></li>
- *  <li><code>GET:    /movies/new            => method="editNew"</code></li>
- *  <li><code>POST:   /movies                => method="create"</code></li>
- *  <li><code>PUT:    /movies/Thrillers      => method="update", id="Thrillers"</code></li>
- *  <li><code>DELETE: /movies/Thrillers      => method="destroy", id="Thrillers"</code></li>
+ *  <li><code>GET:    /movies                =&gt; method="index"</code></li>
+ *  <li><code>GET:    /movies/Thrillers      =&gt; method="show", id="Thrillers"</code></li>
+ *  <li><code>GET:    /movies/Thrillers;edit =&gt; method="edit", id="Thrillers"</code></li>
+ *  <li><code>GET:    /movies/Thrillers/edit =&gt; method="edit", id="Thrillers"</code></li>
+ *  <li><code>GET:    /movies/new            =&gt; method="editNew"</code></li>
+ *  <li><code>POST:   /movies                =&gt; method="create"</code></li>
+ *  <li><code>PUT:    /movies/Thrillers      =&gt; method="update", id="Thrillers"</code></li>
+ *  <li><code>DELETE: /movies/Thrillers      =&gt; method="destroy", id="Thrillers"</code></li>
  * </ul>
  * <p>
  * To simulate the HTTP methods PUT and DELETE, since they aren't supported by HTML,
@@ -96,8 +97,16 @@ import java.util.HashMap;
  */
 public class RestActionMapper extends DefaultActionMapper {
 
-    protected static final Logger LOG = LoggerFactory.getLogger(RestActionMapper.class);
+    protected static final Logger LOG = LogManager.getLogger(RestActionMapper.class);
+
     public static final String HTTP_METHOD_PARAM = "_method";
+
+    private static final String GET = "get";
+    private static final String POST = "post";
+    private static final String PUT = "put";
+    private static final String DELETE = "delete";
+    private static final String OPTIONS = "options";
+
     private String idParameterName = "id";
     private String indexMethodName = "index";
     private String getMethodName = "show";
@@ -201,7 +210,7 @@ public class RestActionMapper extends DefaultActionMapper {
 
         String fullName = mapping.getName();
         // Only try something if the action name is specified
-        if (fullName != null && fullName.length() > 0) {
+        if (StringUtils.isNotEmpty(fullName)) {
 
             // cut off any ;jsessionid= type appendix but allow the rails-like ;edit
             int scPos = fullName.indexOf(';');
@@ -215,7 +224,8 @@ public class RestActionMapper extends DefaultActionMapper {
 
                 // fun trickery to parse 'actionName/id/methodName' in the case of 'animals/dog/edit'
                 int prevSlashPos = fullName.lastIndexOf('/', lastSlashPos - 1);
-                if (prevSlashPos > -1) {
+                //WW-4589 do not overwrite explicit method name
+                if (prevSlashPos > -1 && mapping.getMethod() == null) {
                     mapping.setMethod(fullName.substring(lastSlashPos + 1));
                     fullName = fullName.substring(0, lastSlashPos);
                     lastSlashPos = prevSlashPos;
@@ -282,7 +292,7 @@ public class RestActionMapper extends DefaultActionMapper {
             if (id != null) {
                 if (!"new".equals(id)) {
                     if (mapping.getParams() == null) {
-                        mapping.setParams(new HashMap());
+                        mapping.setParams(new HashMap<String, Object>());
                     }
                     mapping.getParams().put(idParameterName, new String[]{id});
                 }
@@ -290,18 +300,27 @@ public class RestActionMapper extends DefaultActionMapper {
             }
 
             mapping.setName(fullName);
-            return mapping;
         }
-        // if action name isn't specified, it can be a normal request, to static resource, return null to allow handle that case
-        return null;
+        return mapping;
     }
 
     private void handleDynamicMethodInvocation(ActionMapping mapping, String name) {
         int exclamation = name.lastIndexOf("!");
         if (exclamation != -1) {
-            mapping.setName(name.substring(0, exclamation));
+            String actionName = name.substring(0, exclamation);
+            String actionMethod = name.substring(exclamation + 1);
+
+            // WW-4585
+            // add any ; appendix to name, it will be handled later in getMapping method
+            int scPos = actionMethod.indexOf(';');
+            if (scPos != -1) {
+                actionName = actionName + actionMethod.substring(scPos);
+                actionMethod = actionMethod.substring(0, scPos);
+            }
+
+            mapping.setName(actionName);
             if (allowDynamicMethodCalls) {
-                mapping.setMethod(name.substring(exclamation + 1));
+                mapping.setMethod(actionMethod);
             } else {
                 mapping.setMethod(null);
             }
@@ -317,8 +336,7 @@ public class RestActionMapper extends DefaultActionMapper {
      * @param mapping
      *            The action mapping to populate
      */
-    protected void parseNameAndNamespace(String uri, ActionMapping mapping,
-            ConfigurationManager configManager) {
+    protected void parseNameAndNamespace(String uri, ActionMapping mapping, ConfigurationManager configManager) {
         String namespace, name;
         int lastSlash = uri.lastIndexOf("/");
         if (lastSlash == -1) {
@@ -353,31 +371,23 @@ public class RestActionMapper extends DefaultActionMapper {
     }
 
     protected boolean isGet(HttpServletRequest request) {
-        return "get".equalsIgnoreCase(request.getMethod());
+        return GET.equalsIgnoreCase(request.getMethod());
     }
 
     protected boolean isPost(HttpServletRequest request) {
-        return "post".equalsIgnoreCase(request.getMethod());
+        return POST.equalsIgnoreCase(request.getMethod());
     }
 
     protected boolean isPut(HttpServletRequest request) {
-        if ("put".equalsIgnoreCase(request.getMethod())) {
-            return true;
-        } else {
-            return isPost(request) && "put".equalsIgnoreCase(request.getParameter(HTTP_METHOD_PARAM));
-        }
+        return PUT.equalsIgnoreCase(request.getMethod()) || isPost(request) && PUT.equalsIgnoreCase(request.getParameter(HTTP_METHOD_PARAM));
     }
 
     protected boolean isDelete(HttpServletRequest request) {
-        if ("delete".equalsIgnoreCase(request.getMethod())) {
-            return true;
-        } else {
-            return "delete".equalsIgnoreCase(request.getParameter(HTTP_METHOD_PARAM));
-        }
+        return DELETE.equalsIgnoreCase(request.getMethod()) || DELETE.equalsIgnoreCase(request.getParameter(HTTP_METHOD_PARAM));
     }
 
     protected boolean isOptions(HttpServletRequest request) {
-        return "options".equalsIgnoreCase(request.getMethod());
+        return OPTIONS.equalsIgnoreCase(request.getMethod());
     }
     
     protected boolean isExpectContinue(HttpServletRequest request) {

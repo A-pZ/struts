@@ -26,8 +26,8 @@ import com.opensymphony.xwork2.ActionInvocation;
 import com.opensymphony.xwork2.LocaleProvider;
 import com.opensymphony.xwork2.inject.Inject;
 import com.opensymphony.xwork2.util.ValueStack;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import freemarker.template.Configuration;
 import freemarker.template.ObjectWrapper;
 import freemarker.template.Template;
@@ -38,7 +38,7 @@ import freemarker.template.TemplateModelException;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.struts2.ServletActionContext;
 import org.apache.struts2.StrutsStatics;
-import org.apache.struts2.dispatcher.StrutsResultSupport;
+import org.apache.struts2.result.StrutsResultSupport;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -104,7 +104,7 @@ public class FreemarkerResult extends StrutsResultSupport {
 
     private static final long serialVersionUID = -3778230771704661631L;
 
-    private static final Logger LOG = LoggerFactory.getLogger(FreemarkerResult.class);
+    private static final Logger LOG = LogManager.getLogger(FreemarkerResult.class);
 
     protected ActionInvocation invocation;
     protected Configuration configuration;
@@ -115,7 +115,7 @@ public class FreemarkerResult extends StrutsResultSupport {
     /*
      * Struts results are constructed for each result execution
      *
-     * the current context is availible to subclasses via these protected fields
+     * the current context is available to subclasses via these protected fields
      */
     protected String location;
     private String pContentType = "text/html";
@@ -141,6 +141,8 @@ public class FreemarkerResult extends StrutsResultSupport {
     /**
      * allow parameterization of the contentType
      * the default being text/html
+     *
+     * @return the content type
      */
     public String getContentType() {
         return pContentType;
@@ -148,12 +150,20 @@ public class FreemarkerResult extends StrutsResultSupport {
 
     /**
      * Execute this result, using the specified template locationArg.
-     * <p/>
-     * The template locationArg has already been interoplated for any variable substitutions
-     * <p/>
+     * <p>
+     * The template locationArg has already been interpolated for any variable substitutions
+     * </p>
+     * <p>
      * this method obtains the freemarker configuration and the object wrapper from the provided hooks.
      * It them implements the template processing workflow by calling the hooks for
      * preTemplateProcess and postTemplateProcess
+     * </p>
+     *
+     * @param locationArg location argument
+     * @param invocation the action invocation
+     *
+     * @throws IOException in case of IO errors
+     * @throws TemplateException in case of freemarker template errors
      */
     public void doExecute(String locationArg, ActionInvocation invocation) throws IOException, TemplateException {
         this.location = locationArg;
@@ -230,27 +240,40 @@ public class FreemarkerResult extends StrutsResultSupport {
     }
 
     /**
+     * <p>
      * This method is called from {@link #doExecute(String, ActionInvocation)} to obtain the
      * FreeMarker configuration object that this result will use for template loading. This is a
      * hook that allows you to custom-configure the configuration object in a subclass, or to fetch
      * it from an IoC container.
-     * <p/>
+     * </p>
+     *
+     * <p>
      * <b>
      * The default implementation obtains the configuration from the ConfigurationManager instance.
      * </b>
+     * </p>
+     *
+     * @return the freemarker configuration object
+     * @throws TemplateException in case of freemarker configuration errors
      */
     protected Configuration getConfiguration() throws TemplateException {
         return freemarkerManager.getConfiguration(ServletActionContext.getServletContext());
     }
 
     /**
+     * <p>
      * This method is called from {@link #doExecute(String, ActionInvocation)}  to obtain the
      * FreeMarker object wrapper object that this result will use for adapting objects into template
      * models. This is a hook that allows you to custom-configure the wrapper object in a subclass.
-     * <p/>
+     * </p>
+     *
+     * <p>
      * <b>
      * The default implementation returns {@link Configuration#getObjectWrapper()}
      * </b>
+     * </p>
+     *
+     * @return the object wrapper from configuration
      */
     protected ObjectWrapper getObjectWrapper() {
         return configuration.getObjectWrapper();
@@ -263,6 +286,9 @@ public class FreemarkerResult extends StrutsResultSupport {
 
     /**
      * The default writer writes directly to the response writer.
+     *
+     * @return Writer the response writer
+     * @throws IOException in case of IO errors
      */
     protected Writer getWriter() throws IOException {
         if(writer != null) {
@@ -273,9 +299,10 @@ public class FreemarkerResult extends StrutsResultSupport {
 
     /**
      * Build the instance of the ScopesHashModel, including JspTagLib support
-     * <p/>
+     * <p>
      * Objects added to the model are
-     * <p/>
+     * </p>
+     *
      * <ul>
      * <li>Application - servlet context attributes hash model
      * <li>JspTaglibs - jsp tag lib factory model
@@ -289,6 +316,9 @@ public class FreemarkerResult extends StrutsResultSupport {
      * <li>exception - optional : the JSP or Servlet exception as per the servlet spec (for JSP Exception pages)
      * <li>struts - instance of the StrutsUtil class
      * </ul>
+     *
+     * @return TemplateModel returns the created template model
+     * @throws TemplateModelException in case of errors during creating the model
      */
     protected TemplateModel createModel() throws TemplateModelException {
         ServletContext servletContext = ServletActionContext.getServletContext();
@@ -305,6 +335,8 @@ public class FreemarkerResult extends StrutsResultSupport {
      * Returns the locale used for the {@link Configuration#getTemplate(String, Locale)} call. The base implementation
      * simply returns the locale setting of the action (assuming the action implements {@link LocaleProvider}) or, if
      * the action does not the configuration's locale is returned. Override this method to provide different behaviour,
+     *
+     * @return the locale from action if action implements the {@link LocaleProvider}) or local from configuration
      */
     protected Locale deduceLocale() {
         if (invocation.getAction() instanceof LocaleProvider) {
@@ -316,8 +348,13 @@ public class FreemarkerResult extends StrutsResultSupport {
 
     /**
      * the default implementation of postTemplateProcess applies the contentType parameter
+     *
+     * @param template the freemarker template
+     * @param model the template model
+     *
+     * @throws IOException in case of IO errors
      */
-    protected void postTemplateProcess(Template template, TemplateModel data) throws IOException {
+    protected void postTemplateProcess(Template template, TemplateModel model) throws IOException {
     }
 
     /**
@@ -327,7 +364,10 @@ public class FreemarkerResult extends StrutsResultSupport {
      * A typical action to perform here is to inject application-specific
      * objects into the model root
      *
+     * @param template the freemarker template
+     * @param model the template model
      * @return true to process the template, false to suppress template processing.
+     * @throws IOException in case of IO errors
      */
     protected boolean preTemplateProcess(Template template, TemplateModel model) throws IOException {
         Object attrContentType = template.getCustomAttribute("content_type");
@@ -372,7 +412,7 @@ public class FreemarkerResult extends StrutsResultSupport {
     }
 
     /**
-     * Writes to the stream only when template processing completed successfully
+     * @param writeIfCompleted Writes to the stream only when template processing completed successfully
      */
     public void setWriteIfCompleted(boolean writeIfCompleted) {
         this.writeIfCompleted = writeIfCompleted;

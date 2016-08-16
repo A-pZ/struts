@@ -25,7 +25,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * Type-safe rest-related informtion to apply to a response
+ * Type-safe rest-related information to apply to a response
  */
 public interface HttpHeaders {
 
@@ -40,17 +40,17 @@ public interface HttpHeaders {
             HttpServletResponse response, Object target);
     
     /**
-     * The HTTP status code
+     * @return  The HTTP status code
      */
     int getStatus();
 
     /**
-     * The HTTP status code
+     * @param status set the HTTP status code
      */
     void setStatus(int status);
 
     /**
-     * The result code to process
+     * @return The result code to process
      */
     String getResultCode();
 

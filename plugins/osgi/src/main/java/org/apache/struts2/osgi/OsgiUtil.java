@@ -21,8 +21,8 @@
 
 package org.apache.struts2.osgi;
 
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import org.osgi.framework.Bundle;
 
 import java.lang.reflect.Method;
@@ -31,11 +31,18 @@ import java.net.URL;
 
 public class OsgiUtil {
 
-    private static final Logger LOG = LoggerFactory.getLogger(OsgiUtil.class);
+    private static final Logger LOG = LogManager.getLogger(OsgiUtil.class);
 
     /**
-     * A bundle is a jar, and a bunble URL will be useless to clients, this method translates
+     * A bundle is a jar, and a bundle URL will be useless to clients, this method translates
      * a URL to a resource inside a bundle from "bundle:something/path" to "jar:file:bundlelocation!/path"
+     *
+     * @param bundleUrl URL to translate
+     * @param bundle the bundle
+     *
+     * @return translated URL
+     *
+     * @throws MalformedURLException if url is malformed
      */
     public static URL translateBundleURLToJarURL(URL bundleUrl, Bundle bundle) throws MalformedURLException {
         if (bundleUrl != null && "bundle".equalsIgnoreCase(bundleUrl.getProtocol())) {
@@ -52,14 +59,18 @@ public class OsgiUtil {
     /**
      * Calls getBean() on the passed object using refelection. Used on Spring context
      * because they are loaded from bundles (in anothe class loader)
+     *
+     * @param beanFactory bean factory
+     * @param beanId id of bean
+     *
+     * @return the object found
      */
     public static Object getBean(Object beanFactory, String beanId) {
         try {
             Method getBeanMethod = beanFactory.getClass().getMethod("getBean", String.class);
             return getBeanMethod.invoke(beanFactory, beanId);
         } catch (Exception ex) {
-            if (LOG.isErrorEnabled())
-                LOG.error("Unable to call getBean() on object of type [#0], with bean id [#1]", ex, beanFactory.getClass().getName(), beanId);
+            LOG.error("Unable to call getBean() on object of type [{}], with bean id [{}]",  beanFactory.getClass().getName(), beanId, ex);
         }
 
         return null;
@@ -68,14 +79,18 @@ public class OsgiUtil {
     /**
      * Calls containsBean on the passed object using refelection. Used on Spring context
      * because they are loaded from bundles (in anothe class loader)
+     *
+     * @param beanFactory bean factory
+     * @param beanId id of bean
+     *
+     * @return true if bean factory contains bean with bean id
      */
     public static boolean containsBean(Object beanFactory, String beanId) {
         try {
             Method getBeanMethod = beanFactory.getClass().getMethod("containsBean", String.class);
             return (Boolean) getBeanMethod.invoke(beanFactory, beanId);
         } catch (Exception ex) {
-            if (LOG.isErrorEnabled())
-                LOG.error("Unable to call containsBean() on object of type [#0], with bean id [#1]", ex, beanFactory.getClass().getName(), beanId);
+            LOG.error("Unable to call containsBean() on object of type [{}], with bean id [{}]", beanFactory.getClass().getName(), beanId, ex);
         }
 
         return false;

@@ -2,11 +2,11 @@
 <html>
 <head>
 	<s:if test="currentSkill!=null">
-		<s:set name="submitType" value="'update'"/>
-		<s:text id="title" name="item.edit"><s:param><s:text name="skill"/></s:param></s:text>
+		<s:set var="submitType" value="'update'"/>
+		<s:text var="title" name="item.edit"><s:param><s:text name="skill"/></s:param></s:text>
 	</s:if>
 	<s:else>
-		<s:set name="submitType" value="'create'"/>
+		<s:set var="submitType" value="'create'"/>
 		<s:text var="title" name="item.create"><s:param><s:text name="skill"/></s:param></s:text>
 	</s:else>
 	<title>Struts2 Showcase - CRUD Example - <s:property value="#title"/></title>
@@ -17,8 +17,8 @@
 </div>
 
 <div class="container-fluid">
-	<div class="row-fluid">
-		<div class="span3">
+	<div class="row">
+		<div class="col-md-3">
 			<ul class="nav nav-tabs nav-stacked">
 				<li><s:url var="url" namespace="/employee" action="list"/><s:a href="%{url}">List available Employees</s:a></li>
 				<li><s:url var="url" namespace="/employee" action="edit"/><s:a href="%{url}">Create/Edit Employee</s:a></li>
@@ -26,7 +26,7 @@
 				<li class="active"><s:url var="url" namespace="/skill" action="edit"/><s:a href="%{url}">Create/Edit Skill</s:a></li>
 			</ul>
 		</div>
-		<div class="span9">
+		<div class="col-md-9">
 
 			<s:form action="save">
 				<s:textfield label="%{getText('skill.name')}" name="currentSkill.name"/>

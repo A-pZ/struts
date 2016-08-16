@@ -82,7 +82,7 @@ public abstract class AbstractUITag extends ComponentTagSupport implements Dynam
     protected String tooltipIconPath;
 
     // dynamic attributes.
-    protected Map<String, Object> dynamicAttributes = new HashMap<String, Object>();
+    protected Map<String, Object> dynamicAttributes = new HashMap<>();
 
     protected void populateParams() {
         super.populateParams();
@@ -306,7 +306,7 @@ public abstract class AbstractUITag extends ComponentTagSupport implements Dynam
     }
 
     public void setDynamicAttribute(String uri, String localName, Object value) throws JspException {
-        if (ComponentUtils.altSyntax(getStack()) && ComponentUtils.isExpression(value)) {
+        if (ComponentUtils.altSyntax(getStack()) && ComponentUtils.isExpression(value.toString())) {
             dynamicAttributes.put(localName, String.valueOf(ObjectUtils.defaultIfNull(findValue(value.toString()), value)));
         } else {
             dynamicAttributes.put(localName, value);

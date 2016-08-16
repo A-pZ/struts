@@ -24,8 +24,6 @@ package org.apache.struts2.dispatcher.multipart;
 import com.opensymphony.xwork2.LocaleProvider;
 import com.opensymphony.xwork2.inject.Inject;
 import com.opensymphony.xwork2.util.LocalizedTextUtil;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadBase;
 import org.apache.commons.fileupload.FileUploadException;
@@ -33,6 +31,8 @@ import org.apache.commons.fileupload.RequestContext;
 import org.apache.commons.fileupload.disk.DiskFileItem;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.struts2.StrutsConstants;
 
 import javax.servlet.http.HttpServletRequest;
@@ -40,30 +40,23 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Multipart form data request adapter for Jakarta Commons Fileupload package.
  */
 public class JakartaMultiPartRequest implements MultiPartRequest {
 
-    static final Logger LOG = LoggerFactory.getLogger(JakartaMultiPartRequest.class);
+    static final Logger LOG = LogManager.getLogger(JakartaMultiPartRequest.class);
 
     // maps parameter name -> List of FileItem objects
-    protected Map<String, List<FileItem>> files = new HashMap<String, List<FileItem>>();
+    protected Map<String, List<FileItem>> files = new HashMap<>();
 
     // maps parameter name -> List of param values
-    protected Map<String, List<String>> params = new HashMap<String, List<String>>();
+    protected Map<String, List<String>> params = new HashMap<>();
 
     // any errors while processing this request
-    protected List<String> errors = new ArrayList<String>();
+    protected List<String> errors = new ArrayList<>();
 
     protected long maxSize;
     private Locale defaultLocale = Locale.ENGLISH;
@@ -90,18 +83,22 @@ public class JakartaMultiPartRequest implements MultiPartRequest {
         try {
             setLocale(request);
             processUpload(request, saveDir);
-        } catch (FileUploadBase.SizeLimitExceededException e) {
-            if (LOG.isWarnEnabled()) {
-                LOG.warn("Request exceeded size limit!", e);
+        } catch (FileUploadException e) {
+            LOG.warn("Request exceeded size limit!", e);
+            String errorMessage = null;
+            
+            if(e instanceof FileUploadBase.SizeLimitExceededException) {
+                FileUploadBase.SizeLimitExceededException ex = (FileUploadBase.SizeLimitExceededException) e;
+                errorMessage = buildErrorMessage(e, new Object[]{ex.getPermittedSize(), ex.getActualSize()});
+            } else {
+                errorMessage = buildErrorMessage(e, new Object[]{});
             }
-            String errorMessage = buildErrorMessage(e, new Object[]{e.getPermittedSize(), e.getActualSize()});
+            
             if (!errors.contains(errorMessage)) {
                 errors.add(errorMessage);
             }
         } catch (Exception e) {
-            if (LOG.isWarnEnabled()) {
-                LOG.warn("Unable to parse request", e);
-            }
+            LOG.warn("Unable to parse request", e);
             String errorMessage = buildErrorMessage(e, new Object[]{});
             if (!errors.contains(errorMessage)) {
                 errors.add(errorMessage);
@@ -117,17 +114,13 @@ public class JakartaMultiPartRequest implements MultiPartRequest {
 
     protected String buildErrorMessage(Throwable e, Object[] args) {
         String errorKey = "struts.messages.upload.error." + e.getClass().getSimpleName();
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Preparing error message for key: [#0]", errorKey);
-        }
+        LOG.debug("Preparing error message for key: [{}]", errorKey);
         return LocalizedTextUtil.findText(this.getClass(), errorKey, defaultLocale, e.getMessage(), args);
     }
 
     protected void processUpload(HttpServletRequest request, String saveDir) throws FileUploadException, UnsupportedEncodingException {
         for (FileItem item : parseRequest(request, saveDir)) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Found item " + item.getFieldName());
-            }
+            LOG.debug("Found file item: [{}]", item.getFieldName());
             if (item.isFormField()) {
                 processNormalFormField(item, request.getCharacterEncoding());
             } else {
@@ -137,13 +130,11 @@ public class JakartaMultiPartRequest implements MultiPartRequest {
     }
 
     protected void processFileField(FileItem item) {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Item is a file upload");
-        }
+        LOG.debug("Item is a file upload");
 
         // Skip file uploads that don't have a file name - meaning that no file was selected.
         if (item.getName() == null || item.getName().trim().length() < 1) {
-            LOG.debug("No file has been uploaded for the field: " + item.getFieldName());
+            LOG.debug("No file has been uploaded for the field: {}", item.getFieldName());
             return;
         }
 
@@ -151,7 +142,7 @@ public class JakartaMultiPartRequest implements MultiPartRequest {
         if (files.get(item.getFieldName()) != null) {
             values = files.get(item.getFieldName());
         } else {
-            values = new ArrayList<FileItem>();
+            values = new ArrayList<>();
         }
 
         values.add(item);
@@ -159,14 +150,13 @@ public class JakartaMultiPartRequest implements MultiPartRequest {
     }
 
     protected void processNormalFormField(FileItem item, String charset) throws UnsupportedEncodingException {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Item is a normal form field");
-        }
+        LOG.debug("Item is a normal form field");
+
         List<String> values;
         if (params.get(item.getFieldName()) != null) {
             values = params.get(item.getFieldName());
         } else {
-            values = new ArrayList<String>();
+            values = new ArrayList<>();
         }
 
         // note: see http://jira.opensymphony.com/browse/WW-633
@@ -221,7 +211,7 @@ public class JakartaMultiPartRequest implements MultiPartRequest {
             return null;
         }
 
-        List<String> contentTypes = new ArrayList<String>(items.size());
+        List<String> contentTypes = new ArrayList<>(items.size());
         for (FileItem fileItem : items) {
             contentTypes.add(fileItem.getContentType());
         }
@@ -239,16 +229,14 @@ public class JakartaMultiPartRequest implements MultiPartRequest {
             return null;
         }
 
-        List<File> fileList = new ArrayList<File>(items.size());
+        List<File> fileList = new ArrayList<>(items.size());
         for (FileItem fileItem : items) {
             File storeLocation = ((DiskFileItem) fileItem).getStoreLocation();
             if (fileItem.isInMemory() && storeLocation != null && !storeLocation.exists()) {
                 try {
                     storeLocation.createNewFile();
                 } catch (IOException e) {
-                    if (LOG.isErrorEnabled()) {
-                        LOG.error("Cannot write uploaded empty file to disk: " + storeLocation.getAbsolutePath(), e);
-                    }
+                    LOG.error("Cannot write uploaded empty file to disk: {}", storeLocation.getAbsolutePath(), e);
                 }
             }
             fileList.add(storeLocation);
@@ -267,7 +255,7 @@ public class JakartaMultiPartRequest implements MultiPartRequest {
             return null;
         }
 
-        List<String> fileNames = new ArrayList<String>(items.size());
+        List<String> fileNames = new ArrayList<>(items.size());
         for (FileItem fileItem : items) {
             fileNames.add(getCanonicalName(fileItem.getName()));
         }
@@ -285,7 +273,7 @@ public class JakartaMultiPartRequest implements MultiPartRequest {
             return null;
         }
 
-        List<String> fileNames = new ArrayList<String>(items.size());
+        List<String> fileNames = new ArrayList<>(items.size());
         for (FileItem fileItem : items) {
             fileNames.add(((DiskFileItem) fileItem).getStoreLocation().getName());
         }

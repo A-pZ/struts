@@ -22,8 +22,9 @@
 package org.apache.struts2.components;
 
 import com.opensymphony.xwork2.util.ValueStack;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.struts2.views.annotations.StrutsTag;
 import org.apache.struts2.views.annotations.StrutsTagAttribute;
 
@@ -34,27 +35,23 @@ import java.util.Map;
 
 /**
  * <!-- START SNIPPET: javadoc -->
- *
+ * <p>
  * Create a option transfer select component which is basically two &lt;select ...&gt;
  * tag with buttons in the middle of them allowing options in each of the
  * &lt;select ...&gt; to be moved between themselves. Will auto-select all its
  * elements upon its containing form submision.
- *
+ * </p>
  * <!-- END SNIPPET: javadoc -->
  *
- * <p/>
- *
- *
  * <!-- START SNIPPET: notice -->
- *
+ * <p>
  * NOTE: The id and doubleId need not be supplied as they will generated provided
  * that the optiontransferselect tag is being used in a form tag. The generated id
  * and doubleId will be &lt;form_id&gt;_&lt;optiontransferselect_nameame&gt; and
  * &lt;form_id&gt;_&lt;optiontransferselect_doubleName&gt; respectively.
+ * </p>
  *
  * <!-- END SNIPPET: notice -->
- *
- * <p/>
  *
  * <pre>
  * <!-- START SNIPPET: example -->
@@ -94,7 +91,7 @@ import java.util.Map;
 @StrutsTag(name="optiontransferselect", tldTagClass="org.apache.struts2.views.jsp.ui.OptionTransferSelectTag", description="Renders an input form")
 public class OptionTransferSelect extends DoubleListUIBean {
 
-    private static final Logger LOG = LoggerFactory.getLogger(OptionTransferSelect.class);
+    private static final Logger LOG = LogManager.getLogger(OptionTransferSelect.class);
 
     private static final String TEMPLATE = "optiontransferselect";
 
@@ -150,34 +147,28 @@ public class OptionTransferSelect extends DoubleListUIBean {
             doubleValue = findValue(doubleList);
             addParameter("doubleList", doubleValue);
         }
-        if (size == null || size.trim().length() <= 0) {
+        if (StringUtils.isBlank(size)) {
             addParameter("size", "15");
         }
-        if (doubleSize == null || doubleSize.trim().length() <= 0) {
+        if (StringUtils.isBlank(doubleSize)) {
             addParameter("doubleSize", "15");
         }
-        if (multiple == null || multiple.trim().length() <= 0) {
+        if (StringUtils.isBlank(multiple)) {
             addParameter("multiple", Boolean.TRUE);
         }
-        if (doubleMultiple == null || doubleMultiple.trim().length() <= 0) {
+        if (StringUtils.isBlank(doubleMultiple)) {
             addParameter("doubleMultiple", Boolean.TRUE);
         }
 
-
-
-
-
         // buttonCssClass
-        if (buttonCssClass != null && buttonCssClass.trim().length() > 0) {
+        if (StringUtils.isNotBlank(buttonCssClass)) {
             addParameter("buttonCssClass", buttonCssClass);
         }
 
         // buttonCssStyle
-        if (buttonCssStyle != null && buttonCssStyle.trim().length() > 0) {
+        if (StringUtils.isNotBlank(buttonCssStyle)) {
             addParameter("buttonCssStyle", buttonCssStyle);
         }
-
-
 
         // allowSelectAll
         addParameter("allowSelectAll",

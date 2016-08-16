@@ -24,10 +24,11 @@ package org.apache.struts2.spring;
 import com.opensymphony.xwork2.inject.Container;
 import com.opensymphony.xwork2.inject.Inject;
 import com.opensymphony.xwork2.spring.SpringObjectFactory;
-import com.opensymphony.xwork2.util.logging.Logger;
-import com.opensymphony.xwork2.util.logging.LoggerFactory;
-import org.apache.struts2.StrutsConstants;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.struts2.StrutsConstants;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.WebApplicationContext;
@@ -37,29 +38,27 @@ import javax.servlet.ServletContext;
 
 
 /**
+ * <p>
  * Struts object factory that integrates with Spring.
- * <p/>
+ * </p>
+ *
+ * <p>
  * Spring should be loaded using a web context listener
  * <code>org.springframework.web.context.ContextLoaderListener</code> defined in <code>web.xml</code>.
- *
+ * </p>
  */
 public class StrutsSpringObjectFactory extends SpringObjectFactory {
-    private static final Logger LOG = LoggerFactory.getLogger(StrutsSpringObjectFactory.class);
-
-    //@Inject
-    //public StrutsSpringObjectFactory(
-    //        @Inject(value=StrutsConstants.STRUTS_OBJECTFACTORY_SPRING_AUTOWIRE,required=false) String autoWire,
-    //        @Inject(value=StrutsConstants.STRUTS_OBJECTFACTORY_SPRING_USE_CLASS_CACHE,required=false) String useClassCacheStr,
-    //        @Inject ServletContext servletContext) {
-    //    this(autoWire, "false", useClassCacheStr, servletContext);
-    //}
+    private static final Logger LOG = LogManager.getLogger(StrutsSpringObjectFactory.class);
 
     /**
      * Constructs the spring object factory
      * @param autoWire The type of autowiring to use
      * @param alwaysAutoWire Whether to always respect the autowiring or not
      * @param useClassCacheStr Whether to use the class cache or not
+     * @param enableAopSupport enable AOP support
      * @param servletContext The servlet context
+     * @param devMode development mode
+     * @param container container
      * @since 2.1.3
      */
     @Inject
@@ -73,10 +72,8 @@ public class StrutsSpringObjectFactory extends SpringObjectFactory {
             @Inject Container container) {
           
         super();
-        boolean useClassCache = "true".equals(useClassCacheStr);
-        if (LOG.isInfoEnabled()) {
-            LOG.info("Initializing Struts-Spring integration...");
-        }
+        boolean useClassCache = BooleanUtils.toBoolean(useClassCacheStr);
+        LOG.info("Initializing Struts-Spring integration...");
 
         Object rootWebApplicationContext =  servletContext.getAttribute(WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE);
 
@@ -112,9 +109,7 @@ public class StrutsSpringObjectFactory extends SpringObjectFactory {
 
             ClassReloadingXMLWebApplicationContext reloadingContext = (ClassReloadingXMLWebApplicationContext) appContext;
             reloadingContext.setupReloading(watchList.split(","), acceptClasses, servletContext, "true".equals(reloadConfig));
-            if (LOG.isInfoEnabled()) {
-        	LOG.info("Class reloading is enabled. Make sure this is not used on a production environment!", watchList);
-            }
+            LOG.info("Class reloading is enabled. Make sure this is not used on a production environment!\n{}", watchList);
 
             setClassLoader(reloadingContext.getReloadingClassLoader());
 
@@ -140,12 +135,10 @@ public class StrutsSpringObjectFactory extends SpringObjectFactory {
 
         this.setUseClassCache(useClassCache);
 
-        this.setAlwaysRespectAutowireStrategy("true".equalsIgnoreCase(alwaysAutoWire));
+        this.setAlwaysRespectAutowireStrategy(BooleanUtils.toBoolean(alwaysAutoWire));
 
         this.setEnableAopSupport(enableAopSupport);
 
-        if (LOG.isInfoEnabled()) {
-            LOG.info("... initialized Struts-Spring integration successfully");
-        }
+        LOG.info("... initialized Struts-Spring integration successfully");
     }
 }
